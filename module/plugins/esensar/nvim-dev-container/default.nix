@@ -1,0 +1,7 @@
+{
+  author = "esensar";
+  name = "nvim-dev-container";
+  ref = "main";
+  rev = import ./rev.nix;
+  hash = import ./hash.nix;
+}

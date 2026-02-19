@@ -1,0 +1,7 @@
+{
+  author = "nvim-neorg";
+  name = "neorg";
+  ref = "main";
+  rev = import ./rev.nix;
+  hash = import ./hash.nix;
+}
