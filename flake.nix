@@ -19,8 +19,10 @@
       blnvim = pkgs.callPackage ./package { };
     });
 
+    # Build blnvim from the consumer's pkgs (final) so system overlays
+    # (e.g. sandbox test fixes) propagate into blnvim's dependencies.
     overlays.default = final: prev: {
-      blnvim = self.packages.${final.system}.blnvim;
+      blnvim = final.callPackage ./package { };
     };
 
     devShells = forAllSystems (system: let

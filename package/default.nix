@@ -296,7 +296,7 @@ let
     rustfmt                     # Rust
     taplo                       # TOML
     shfmt                       # Shell (sh, zsh)
-    # php-cs-fixer provided by HM module (needs overlay for sandbox fix)
+    php83Packages.php-cs-fixer  # PHP
     alejandra                   # Nix
     stylua                      # Lua
     nodePackages.prettier       # JS/TS/JSON/YAML/HTML/Markdown
