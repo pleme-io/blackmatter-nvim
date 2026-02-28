@@ -49,6 +49,17 @@ in {
       xdg.configFile."nvim/init.lua".source = ./conf/init.lua;
       blackmatter.components.nvim.plugin.groups.enable = true;
 
+      # When transitioning from directory-level symlinks to recursive = true
+      # individual file links, home-manager can't replace a symlink with a
+      # mkdir. Remove stale symlinks so linkGeneration always succeeds.
+      home.activation.cleanNvimSiteLinks = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
+        for dir in "$HOME/.local/share/nvim/site/queries" "$HOME/.local/share/nvim/site/parser"; do
+          if [ -L "$dir" ]; then
+            rm "$dir"
+          fi
+        done
+      '';
+
       # TREESITTER VERSION COORDINATION
       # The nvim-treesitter plugin provides the Lua runtime (configs, query, etc.)
       # from a custom GitHub pin. Its bundled queries are stripped via postPatch.
