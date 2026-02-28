@@ -55,6 +55,8 @@ return {
 	nushell = {},
 	zls = {},
 	gopls = {},
-	clangd = {},
+	clangd = {
+		cmd = { "clangd", "--background-index", "--clang-tidy", "--header-insertion=iwyu" },
+	},
 	-- powershell_es disabled: powershell-editor-services not available in nixpkgs-unstable
 }

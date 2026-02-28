@@ -19,6 +19,8 @@ function M.setup()
 	formatters_by_ft.php = { "php_cs_fixer" }
 	formatters_by_ft.ruby = { "rubocop" }
 	formatters_by_ft.java = { "google-java-format" }
+	formatters_by_ft.c = { "clang_format" }
+	formatters_by_ft.cpp = { "clang_format" }
 
 	-- Prettier-based formats
 	if cmd_exists("prettier") then
