@@ -40,9 +40,10 @@ function M.setup()
       )
     end
   end
-  -- Tagline in muted snow (#D8DEE9)
+  -- Tagline in muted snow (#D8DEE9) with breathing room
   parts[#parts + 1] = "echo ''"
-  parts[#parts + 1] = [[printf '\033[38;2;216;222;233m'; echo '                  ❄  neovim, refined']]
+  parts[#parts + 1] = [[printf '\033[38;2;76;86;106m'; echo '              ─────────────────────────────']]
+  parts[#parts + 1] = [[printf '\033[38;2;216;222;233m'; echo '                    neovim, refined']]
   parts[#parts + 1] = [[printf '\033[0m']]
   local logo_cmd = table.concat(parts, "; ")
 
@@ -71,9 +72,9 @@ function M.setup()
         },
       },
       sections = {
-        { section = "terminal", cmd = logo_cmd, height = 15, padding = 1 },
-        { section = "keys", gap = 1, padding = 1 },
-        { section = "recent_files", title = "Recent Files", icon = " ", limit = 5, padding = 1 },
+        { section = "terminal", cmd = logo_cmd, height = 16, padding = 2 },
+        { section = "keys", gap = 1, padding = 2 },
+        { section = "recent_files", title = "Recent Files", icon = " ", limit = 8, padding = 2 },
         { section = "startup" },
       },
     },

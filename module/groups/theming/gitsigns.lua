@@ -7,9 +7,9 @@ function M.setup()
     signs = {
       add          = { text = "▎" },
       change       = { text = "▎" },
-      delete       = { text = "_" },
-      topdelete    = { text = "‾" },
-      changedelete = { text = "~" },
+      delete       = { text = "▁" },
+      topdelete    = { text = "▔" },
+      changedelete = { text = "▎" },
     },
     current_line_blame = true,
     current_line_blame_opts = {
@@ -55,5 +55,7 @@ function M.setup()
   vim.api.nvim_set_hl(0, "GitSignsAdd", { fg = "#A3BE8C" })
   vim.api.nvim_set_hl(0, "GitSignsChange", { fg = "#EBCB8B" })
   vim.api.nvim_set_hl(0, "GitSignsDelete", { fg = "#BF616A" })
+  vim.api.nvim_set_hl(0, "GitSignsChangedelete", { fg = "#B48EAD" })
+  vim.api.nvim_set_hl(0, "GitSignsTopdelete", { fg = "#BF616A" })
 end
 return M

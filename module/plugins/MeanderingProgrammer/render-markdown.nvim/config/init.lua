@@ -14,8 +14,8 @@ function M.setup()
     },
     code = {
       enabled = true,
-      sign = true,
-      style = "normal", -- Can be: "full", "normal", "language", "none"
+      sign = false,
+      style = "full",
       left_pad = 2,
       right_pad = 2,
     },

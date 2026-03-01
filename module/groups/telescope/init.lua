@@ -6,6 +6,9 @@ function M.setup()
     defaults = {
       layout_strategy = "horizontal",
       borderchars = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
+      prompt_prefix = "  ",
+      selection_caret = " ",
+      entry_prefix = "  ",
       path_display = { "truncate" },
       file_ignore_patterns = { "node_modules", ".git/", "build/", "dist/", "target/" },
       vimgrep_arguments = {

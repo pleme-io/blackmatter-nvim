@@ -5,11 +5,11 @@ function M.setup()
 
   -- Define subtle highlight groups for indent guides
   vim.api.nvim_set_hl(0, "IblIndent", { fg = "#3B4252" })
-  vim.api.nvim_set_hl(0, "IblScope", { fg = "#5E81AC" })
+  vim.api.nvim_set_hl(0, "IblScope", { fg = "#4C566A" })
 
   ibl.setup({
     indent = {
-      char = "│",
+      char = "▏",
       highlight = "IblIndent",
     },
     scope = {
@@ -17,7 +17,7 @@ function M.setup()
       highlight = "IblScope",
     },
     exclude = {
-      filetypes = { "help", "dashboard", "lazy", "mason", "notify", "trouble" },
+      filetypes = { "help", "dashboard", "lazy", "mason", "notify", "trouble", "oil", "sagaoutline" },
     },
   })
 end

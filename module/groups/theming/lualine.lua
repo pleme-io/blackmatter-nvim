@@ -12,8 +12,25 @@ function M.setup()
       lualine_a = { "mode" },
       lualine_b = {
         "branch",
-        { "diff", symbols = { added = " ", modified = " ", removed = " " } },
-        "diagnostics",
+        {
+          "diff",
+          symbols = { added = " ", modified = " ", removed = " " },
+          diff_color = {
+            added    = { fg = "#A3BE8C" },
+            modified = { fg = "#EBCB8B" },
+            removed  = { fg = "#BF616A" },
+          },
+        },
+        {
+          "diagnostics",
+          symbols = { error = " ", warn = " ", info = " ", hint = "󰌵 " },
+          diagnostics_color = {
+            error = { fg = "#BF616A" },
+            warn  = { fg = "#EBCB8B" },
+            info  = { fg = "#88C0D0" },
+            hint  = { fg = "#A3BE8C" },
+          },
+        },
       },
       lualine_c = {
         { "filename", path = 1, symbols = { modified = " ", readonly = " " } },

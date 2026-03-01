@@ -13,7 +13,7 @@ function M.setup()
 		ui = {
 			border = "rounded",
 			title = true,
-			winblend = 0,
+			winblend = 8,
 			expand = "",
 			collapse = "",
 			code_action = "󰌵",

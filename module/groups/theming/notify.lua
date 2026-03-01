@@ -16,6 +16,8 @@ function M.setup()
     stages            = "fade_in_slide_out",
     render            = "minimal",
     timeout           = 3000,
+    max_width         = 60,
+    top_down          = true,
     background_colour = "#2E3440",
     fps               = 60,
   })
