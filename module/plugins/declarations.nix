@@ -134,6 +134,7 @@
   (import ./onsails/lspkind.nvim/default.nix)
   (import ./p00f/cphelper.nvim/default.nix)
   (import ./phaazon/hop.nvim/default.nix)
+  (import ./pleme-io/compass.nvim/default.nix)
   (import ./preservim/vim-markdown/default.nix)
   (import ./pwntester/octo.nvim/default.nix)
   (import ./rachartier/tiny-inline-diagnostic.nvim/default.nix)

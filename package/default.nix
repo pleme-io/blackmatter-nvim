@@ -71,6 +71,7 @@ let
     "ggandor/leap.nvim" = true;
     "kylechui/nvim-surround" = true;
     "stevearc/oil.nvim" = true;
+    "pleme-io/compass.nvim" = true;
     # completion
     "L3MON4D3/LuaSnip" = true;
     "hrsh7th/cmp-path" = true;

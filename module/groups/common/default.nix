@@ -33,6 +33,7 @@ in {
           ggandor."leap.nvim".enable = true;
           kylechui.nvim-surround.enable = true;
           stevearc."oil.nvim".enable = true;
+          pleme-io."compass.nvim".enable = true;
         };
       }
     )
