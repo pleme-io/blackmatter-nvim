@@ -68,8 +68,6 @@ let
     "folke/which-key.nvim" = true;
     "folke/todo-comments.nvim" = true;
     "numToStr/Comment.nvim" = true;
-    "ggandor/leap.nvim" = true;
-    "kylechui/nvim-surround" = true;
     "stevearc/oil.nvim" = true;
     "pleme-io/compass.nvim" = true;
     # completion

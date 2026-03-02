@@ -30,8 +30,6 @@ in {
           folke."which-key.nvim".enable = true;
           folke."todo-comments.nvim".enable = true;
           numToStr."Comment.nvim".enable = true;
-          ggandor."leap.nvim".enable = true;
-          kylechui.nvim-surround.enable = true;
           stevearc."oil.nvim".enable = true;
           pleme-io."compass.nvim".enable = true;
         };
