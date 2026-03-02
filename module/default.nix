@@ -23,7 +23,7 @@ in {
     enable = mkEnableOption "enable neovim configuration";
     package = mkOption {
       type = types.package;
-      default = pkgs.neovim;
+      default = pkgs.callPackage ../pkgs/neovim { msgpack-c = pkgs.msgpack-c; };
       description = mdDoc "neovim configuration management";
     };
   };

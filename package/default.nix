@@ -1,5 +1,8 @@
 # Standalone blnvim package — full blackmatter neovim without home-manager
-{ pkgs, neovim ? pkgs.neovim, lib ? pkgs.lib }:
+{ pkgs
+, neovim ? pkgs.callPackage ../pkgs/neovim { msgpack-c = pkgs.msgpack-c; }
+, lib ? pkgs.lib
+}:
 
 let
   pluginHelper = import ../lib/plugin-helper.nix { inherit lib pkgs; };
