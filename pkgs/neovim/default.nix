@@ -26,7 +26,7 @@ in
     src = fetchFromGitHub {
       owner = "neovim";
       repo = "neovim";
-      rev = "v${version}";
+      rev = "v0.11.6";
       hash = "sha256-GdfCaKNe/qPaUV2NJPXY+ATnQNWnyFTFnkOYDyLhTNg=";
     };
     nativeBuildInputs =
