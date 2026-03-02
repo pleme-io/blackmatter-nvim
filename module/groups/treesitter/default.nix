@@ -26,7 +26,7 @@ in {
         blackmatter.components.nvim.plugins = {
           nvim-treesitter.nvim-treesitter.enable = true;
           nvim-treesitter.nvim-treesitter-textobjects.enable = true;
-          nvim-treesitter.nvim-treesitter-context.enable = true;
+          # nvim-treesitter.nvim-treesitter-context.enable = true;
           JoosepAlviste.nvim-ts-context-commentstring.enable = true;
           MeanderingProgrammer."render-markdown.nvim".enable = true;
           windwp.nvim-ts-autotag.enable = true;

@@ -123,7 +123,7 @@ let
     # treesitter
     "nvim-treesitter/nvim-treesitter" = true;
     "nvim-treesitter/nvim-treesitter-textobjects" = true;
-    "nvim-treesitter/nvim-treesitter-context" = true;
+    # "nvim-treesitter/nvim-treesitter-context" = true;
     "JoosepAlviste/nvim-ts-context-commentstring" = true;
     "MeanderingProgrammer/render-markdown.nvim" = true;
     "windwp/nvim-ts-autotag" = true;
