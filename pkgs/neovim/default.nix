@@ -52,10 +52,11 @@ in
         pkgs.luajitPackages.mpack
         libiconv
         tree-sitter
+        pkgs.utf8proc
       ];
     preConfigure = ''
       export PATH=${pkgs.luajitPackages.libluv}/bin:${pkgs.libuv}/bin:$PATH
-      export CMAKE_PREFIX_PATH=${pkgs.libuv}:${libvterm}:${pkgs.msgpack-c}:${pkgs.tree-sitter}:${pkgs.unibilium}:${lpeg}
+      export CMAKE_PREFIX_PATH=${pkgs.libuv}:${libvterm}:${pkgs.msgpack-c}:${pkgs.tree-sitter}:${pkgs.unibilium}:${lpeg}:${pkgs.utf8proc}
       export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
       export CMAKE_OSX_SYSROOT=$(xcrun --sdk --show-sdk-path)
     '';
