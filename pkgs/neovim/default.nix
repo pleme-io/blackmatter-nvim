@@ -17,6 +17,7 @@
   darwin ? null,
 }: let
   libvterm = pkgs.callPackage ./deps/libvterm.nix {inherit pkgs;};
+  lpeg = pkgs.callPackage ./deps/lpeg.nix {inherit pkgs;};
   deps = pkgs.callPackage ./deps {inherit pkgs;};
 in
   stdenv.mkDerivation {
@@ -52,14 +53,14 @@ in
         pkgs.unibilium
         pkgs.libtermkey
         libvterm
-        pkgs.luajitPackages.lpeg
+        lpeg
         pkgs.luajitPackages.mpack
         libiconv
         tree-sitter
       ];
     preConfigure = ''
       export PATH=${pkgs.luajitPackages.libluv}/bin:${pkgs.libuv}/bin:$PATH
-      export CMAKE_PREFIX_PATH=${pkgs.libuv}:${libvterm}:${pkgs.msgpack-c}:${pkgs.tree-sitter}:${pkgs.unibilium}:${pkgs.luajitPackages.lpeg}
+      export CMAKE_PREFIX_PATH=${pkgs.libuv}:${libvterm}:${pkgs.msgpack-c}:${pkgs.tree-sitter}:${pkgs.unibilium}:${lpeg}
       export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
       export CMAKE_OSX_SYSROOT=$(xcrun --sdk --show-sdk-path)
     '';
