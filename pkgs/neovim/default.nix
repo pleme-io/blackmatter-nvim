@@ -22,17 +22,12 @@
 in
   stdenv.mkDerivation {
     pname = "neovim";
-    version = "0.10.4";
+    version = "0.11.6";
     src = fetchFromGitHub {
       owner = "neovim";
       repo = "neovim";
-      rev = "e96f75a4e60c9082e89c7f61e2ce0647e4ebdf43";
-      sha256 =
-        if stdenv.isLinux
-        then "sha256-TAuoa5GD50XB4OCHkSwP1oXfedzVrCBRutNxBp/zGLY=" # Linux sha256
-        else if stdenv.isDarwin
-        then "sha256-OsHIacgorYnB/dPbzl1b6rYUzQdhTtsJYLsFLJxregk=" # Darwin sha256
-        else throw "Unsupported platform";
+      rev = "v${version}";
+      hash = "sha256-GdfCaKNe/qPaUV2NJPXY+ATnQNWnyFTFnkOYDyLhTNg=";
     };
     nativeBuildInputs =
       [
