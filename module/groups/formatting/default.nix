@@ -9,6 +9,7 @@ with lib; let
 in {
   options.blackmatter.components.nvim.plugin.groups.formatting = {
     enable = mkEnableOption "manage formatting";
+    php.enable = mkEnableOption "PHP formatter (php-cs-fixer)";
   };
   # No imports needed - plugins loaded via registry
   config = mkMerge [
@@ -20,7 +21,6 @@ in {
           rustfmt           # Rust
           taplo             # TOML
           shfmt             # Shell (sh, zsh)
-          php83Packages.php-cs-fixer  # PHP
           alejandra         # Nix
           stylua            # Lua
           nodePackages.prettier  # JS/TS/JSON/YAML/HTML/Markdown
@@ -39,5 +39,8 @@ in {
         };
       }
     )
+    (mkIf (cfg.enable && cfg.php.enable) {
+      home.packages = [ pkgs.php83Packages.php-cs-fixer ];
+    })
   ];
 }
