@@ -283,10 +283,13 @@ let
     rubyLsp = pkgs.rubyPackages_3_4.ruby-lsp;
     allGems = [rubyLsp] ++ (rubyLsp.propagatedBuildInputs or []) ++ [pkgs.ruby_3_4];
     gemPath = lib.concatMapStringsSep ":" (d: "${d}/lib/ruby/gems/3.4.0") allGems;
+    # Nix's `''…''` heredoc treats `''` as the close delimiter, so the Ruby
+    # empty-string literal must be escaped as `'''` for Nix to keep parsing.
+    # The rendered .rb file gets the correct two-quote literal.
     rubyLspGemInit = pkgs.writeText "ruby-lsp-gem-paths.rb" ''
       require 'rubygems'
       gem_home = ENV['GEM_HOME']
-      gem_path = (ENV['GEM_PATH'] || '').split(':').reject(&:empty?)
+      gem_path = (ENV['GEM_PATH'] || ''').split(':').reject(&:empty?)
       Gem.use_paths(gem_home, gem_path) if gem_home
     '';
   in
