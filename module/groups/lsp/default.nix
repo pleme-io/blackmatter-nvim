@@ -16,16 +16,25 @@ with lib; let
   # C/C++ compiler for LSP servers (clangd, ccls)
   cCompiler = if isDarwin then pkgs.clang else pkgs.gcc;
 
-  # Wrap ruby-lsp to export GEM_PATH as an environment variable.
-  # The Nix gem wrapper sets Gem.paths at the Ruby level, but ruby-lsp's
-  # composed bundle resolution uses bundler which needs GEM_PATH in the env.
+  # Wrap ruby-lsp so ONLY Nix-store gems resolve. We set GEM_HOME + GEM_PATH
+  # and also force Gem.use_paths via RUBYOPT, which drops Gem.user_dir
+  # (~/.gem/ruby/3.4.0) from the resolver entirely. Without this override a
+  # stray user-installed gem (e.g. `gem install date`) linked against a
+  # previous ruby store path will shadow the Nix stdlib and crash with
+  # "Library not loaded: .../libruby-3.4.8.dylib" once the old ruby is GC'd.
   rubyLspWrapped = let
     rubyLsp = pkgs.rubyPackages_3_4.ruby-lsp;
     allGems = [rubyLsp] ++ (rubyLsp.propagatedBuildInputs or []) ++ [pkgs.ruby_3_4];
     gemPath = lib.concatMapStringsSep ":" (d: "${d}/lib/ruby/gems/3.4.0") allGems;
+    rubyLspGemInit = pkgs.writeText "ruby-lsp-gem-paths.rb" ''
+      require 'rubygems'
+      Gem.use_paths('${rubyLsp}/lib/ruby/gems/3.4.0', '${gemPath}'.split(':'))
+    '';
   in
     pkgs.writeShellScriptBin "ruby-lsp" ''
-      export GEM_PATH="${gemPath}''${GEM_PATH:+:$GEM_PATH}"
+      export GEM_HOME="${rubyLsp}/lib/ruby/gems/3.4.0"
+      export GEM_PATH="${gemPath}"
+      export RUBYOPT="-r${rubyLspGemInit} ''${RUBYOPT:-}"
       exec ${rubyLsp}/bin/ruby-lsp "$@"
     '';
 in {

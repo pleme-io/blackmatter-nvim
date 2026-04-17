@@ -273,14 +273,24 @@ let
   # C/C++ compiler for LSP (clangd, ccls)
   cCompiler = if isDarwin then pkgs.clang else pkgs.gcc;
 
-  # Wrap ruby-lsp to export GEM_PATH (same as module/groups/lsp/default.nix)
+  # Wrap ruby-lsp so ONLY Nix-store gems resolve. See
+  # module/groups/lsp/default.nix for the full rationale — setting GEM_HOME
+  # and RUBYOPT with Gem.use_paths drops ~/.gem/ruby/3.4.0 from the resolver,
+  # preventing stale user-installed native gems (linked to a GC'd ruby store
+  # path) from shadowing the Nix-provided stdlib.
   rubyLspWrapped = let
     rubyLsp = pkgs.rubyPackages_3_4.ruby-lsp;
     allGems = [rubyLsp] ++ (rubyLsp.propagatedBuildInputs or []) ++ [pkgs.ruby_3_4];
     gemPath = lib.concatMapStringsSep ":" (d: "${d}/lib/ruby/gems/3.4.0") allGems;
+    rubyLspGemInit = pkgs.writeText "ruby-lsp-gem-paths.rb" ''
+      require 'rubygems'
+      Gem.use_paths('${rubyLsp}/lib/ruby/gems/3.4.0', '${gemPath}'.split(':'))
+    '';
   in
     pkgs.writeShellScriptBin "ruby-lsp" ''
-      export GEM_PATH="${gemPath}''${GEM_PATH:+:$GEM_PATH}"
+      export GEM_HOME="${rubyLsp}/lib/ruby/gems/3.4.0"
+      export GEM_PATH="${gemPath}"
+      export RUBYOPT="-r${rubyLspGemInit} ''${RUBYOPT:-}"
       exec ${rubyLsp}/bin/ruby-lsp "$@"
     '';
 
