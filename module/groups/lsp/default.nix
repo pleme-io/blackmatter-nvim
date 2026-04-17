@@ -16,24 +16,40 @@ with lib; let
   # C/C++ compiler for LSP servers (clangd, ccls)
   cCompiler = if isDarwin then pkgs.clang else pkgs.gcc;
 
-  # Wrap ruby-lsp so ONLY Nix-store gems resolve. We set GEM_HOME + GEM_PATH
-  # and also force Gem.use_paths via RUBYOPT, which drops Gem.user_dir
-  # (~/.gem/ruby/3.4.0) from the resolver entirely. Without this override a
-  # stray user-installed gem (e.g. `gem install date`) linked against a
-  # previous ruby store path will shadow the Nix stdlib and crash with
-  # "Library not loaded: .../libruby-3.4.8.dylib" once the old ruby is GC'd.
+  # Wrap ruby-lsp so ONLY Nix-store gems resolve for LOOKUP, while a writable
+  # XDG cache dir absorbs any install ruby-lsp performs at startup (it
+  # Gem.install's a bundler version matching the project's Gemfile.lock).
+  #
+  # Why not point GEM_HOME at the read-only Nix store? ruby-lsp's
+  # setup_bundler.rb calls Gem.install('bundler', version) when the installed
+  # bundler doesn't match Gemfile.lock — crashes with EACCES on /nix/store.
+  #
+  # Why not leave Gem.user_dir (~/.gem) alone? A stray user-installed gem
+  # (e.g. `gem install date`) linked against a previous ruby store path
+  # shadows the Nix stdlib and crashes with "Library not loaded:
+  # libruby-3.4.8.dylib" once the old ruby derivation is GC'd.
+  #
+  # Solution: the init.rb reads GEM_HOME/GEM_PATH from env (set in the
+  # wrapper at runtime) and calls Gem.use_paths, which drops Gem.user_dir
+  # entirely. The wrapper creates an XDG cache dir and exports it as
+  # GEM_HOME so ruby-lsp can install bundler there without touching /nix/store.
   rubyLspWrapped = let
     rubyLsp = pkgs.rubyPackages_3_4.ruby-lsp;
     allGems = [rubyLsp] ++ (rubyLsp.propagatedBuildInputs or []) ++ [pkgs.ruby_3_4];
     gemPath = lib.concatMapStringsSep ":" (d: "${d}/lib/ruby/gems/3.4.0") allGems;
     rubyLspGemInit = pkgs.writeText "ruby-lsp-gem-paths.rb" ''
       require 'rubygems'
-      Gem.use_paths('${rubyLsp}/lib/ruby/gems/3.4.0', '${gemPath}'.split(':'))
+      gem_home = ENV['GEM_HOME']
+      gem_path = (ENV['GEM_PATH'] || '').split(':').reject(&:empty?)
+      Gem.use_paths(gem_home, gem_path) if gem_home
     '';
   in
     pkgs.writeShellScriptBin "ruby-lsp" ''
-      export GEM_HOME="${rubyLsp}/lib/ruby/gems/3.4.0"
-      export GEM_PATH="${gemPath}"
+      : "''${XDG_CACHE_HOME:=$HOME/.cache}"
+      gem_home="$XDG_CACHE_HOME/ruby-lsp/gems/3.4.0"
+      mkdir -p "$gem_home"
+      export GEM_HOME="$gem_home"
+      export GEM_PATH="$gem_home:${gemPath}"
       export RUBYOPT="-r${rubyLspGemInit} ''${RUBYOPT:-}"
       exec ${rubyLsp}/bin/ruby-lsp "$@"
     '';

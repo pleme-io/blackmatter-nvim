@@ -273,23 +273,29 @@ let
   # C/C++ compiler for LSP (clangd, ccls)
   cCompiler = if isDarwin then pkgs.clang else pkgs.gcc;
 
-  # Wrap ruby-lsp so ONLY Nix-store gems resolve. See
-  # module/groups/lsp/default.nix for the full rationale — setting GEM_HOME
-  # and RUBYOPT with Gem.use_paths drops ~/.gem/ruby/3.4.0 from the resolver,
-  # preventing stale user-installed native gems (linked to a GC'd ruby store
-  # path) from shadowing the Nix-provided stdlib.
+  # Wrap ruby-lsp — see module/groups/lsp/default.nix for the full rationale.
+  # GEM_HOME points to a writable XDG cache (ruby-lsp Gem.install's a matching
+  # bundler at startup, which EACCES'd when GEM_HOME was the /nix/store path).
+  # GEM_PATH prepends that cache then the Nix gems. init.rb reads env and
+  # calls Gem.use_paths, dropping Gem.user_dir (~/.gem) from the resolver so
+  # stale user-installed native gems can't shadow the Nix stdlib.
   rubyLspWrapped = let
     rubyLsp = pkgs.rubyPackages_3_4.ruby-lsp;
     allGems = [rubyLsp] ++ (rubyLsp.propagatedBuildInputs or []) ++ [pkgs.ruby_3_4];
     gemPath = lib.concatMapStringsSep ":" (d: "${d}/lib/ruby/gems/3.4.0") allGems;
     rubyLspGemInit = pkgs.writeText "ruby-lsp-gem-paths.rb" ''
       require 'rubygems'
-      Gem.use_paths('${rubyLsp}/lib/ruby/gems/3.4.0', '${gemPath}'.split(':'))
+      gem_home = ENV['GEM_HOME']
+      gem_path = (ENV['GEM_PATH'] || '').split(':').reject(&:empty?)
+      Gem.use_paths(gem_home, gem_path) if gem_home
     '';
   in
     pkgs.writeShellScriptBin "ruby-lsp" ''
-      export GEM_HOME="${rubyLsp}/lib/ruby/gems/3.4.0"
-      export GEM_PATH="${gemPath}"
+      : "''${XDG_CACHE_HOME:=$HOME/.cache}"
+      gem_home="$XDG_CACHE_HOME/ruby-lsp/gems/3.4.0"
+      mkdir -p "$gem_home"
+      export GEM_HOME="$gem_home"
+      export GEM_PATH="$gem_home:${gemPath}"
       export RUBYOPT="-r${rubyLspGemInit} ''${RUBYOPT:-}"
       exec ${rubyLsp}/bin/ruby-lsp "$@"
     '';
