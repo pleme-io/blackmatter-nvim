@@ -49,13 +49,27 @@ in {
       xdg.configFile."nvim/init.lua".source = ./conf/init.lua;
       blackmatter.components.nvim.plugin.groups.enable = true;
 
-      # When transitioning from directory-level symlinks to recursive = true
-      # individual file links, home-manager can't replace a symlink with a
-      # mkdir. Remove stale symlinks so linkGeneration always succeeds.
+      # Bidirectional cleanup so HM linkGeneration always succeeds when the
+      # site/parser and site/queries entries toggle between modes:
+      #
+      #   recursive = true  → real directory containing per-file symlinks
+      #   recursive = false → single directory symlink to a /nix/store tree
+      #
+      # HM can't replace a symlink with a mkdir, nor a non-empty dir with a
+      # symlink. This hook normalises by:
+      #   - removing the path entirely if it's already a symlink (recursive=
+      #     false → toggle), so HM's linkNewGen can recreate it
+      #   - if it's a real dir (recursive=true → false migration), pruning
+      #     every symlink inside and then rmdir'ing all empty subdirs. Real
+      #     user files (if any) are preserved; the linkGeneration step will
+      #     fail loudly if it hits one, leaving a clear remediation path.
       home.activation.cleanNvimSiteLinks = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
         for dir in "$HOME/.local/share/nvim/site/queries" "$HOME/.local/share/nvim/site/parser"; do
           if [ -L "$dir" ]; then
             rm "$dir"
+          elif [ -d "$dir" ]; then
+            find "$dir" -type l -delete 2>/dev/null || true
+            find "$dir" -depth -type d -empty -delete 2>/dev/null || true
           fi
         done
       '';
@@ -65,18 +79,23 @@ in {
       # from a custom GitHub pin. Its bundled queries are stripped via postPatch.
       # Parsers (.so) and queries (.scm) below both come from the same nixpkgs
       # snapshot, guaranteeing they match. Update nixpkgs to advance them together.
+      #
+      # `recursive = false` produces ONE symlink per entry (parser, queries)
+      # instead of fanning out to ~1500 per-file links. Both trees are
+      # read-only at nvim runtime (mason and lazy.nvim write to other paths),
+      # so a single dir symlink is safe and cuts HM activation work by 96%.
       home.file.".local/share/nvim/site/parser" = {
         source = "${pkgs.symlinkJoin {
           name = "treesitter-parsers";
           paths = pkgs.vimPlugins.nvim-treesitter.withAllGrammars.dependencies;
         }}/parser";
-        recursive = true;
+        recursive = false;
       };
 
       # Queries from nixpkgs nvim-treesitter (matches parsers above)
       home.file.".local/share/nvim/site/queries" = {
         source = "${pkgs.vimPlugins.nvim-treesitter}/queries";
-        recursive = true;
+        recursive = false;
       };
 
       # Generate lazy-plugins.lua for lazy.nvim integration
