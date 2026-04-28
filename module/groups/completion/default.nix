@@ -1,14 +1,16 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 with lib; let
   name = "completion";
-  plugName = name;
   cfg = config.blackmatter.components.nvim.plugin.groups.${name};
-  common = import ../../common;
-  configPath = "${common.includesPath}/${plugName}";
+  groupTree = (import ../../../lib/group-files.nix { inherit lib pkgs; }) {
+    inherit name;
+    src = ./.;
+  };
 in {
   options.blackmatter.components.nvim.plugin.groups.completion = {
     enable = mkEnableOption name;
@@ -20,9 +22,8 @@ in {
     (
       mkIf cfg.enable
       {
-        home.file."${configPath}/init.lua".source = ./init.lua;
-        home.file."${configPath}/mappings.lua".source = ./mappings.lua;
-        home.file."${configPath}/utils.lua".source = ./utils.lua;
+        # One directory symlink instead of 3 per-file home.file entries.
+        xdg.configFile."nvim/lua/groups/${name}".source = groupTree;
         blackmatter.components.nvim.plugins = {
           L3MON4D3.LuaSnip.enable = true;
           hrsh7th.cmp-path.enable = true;

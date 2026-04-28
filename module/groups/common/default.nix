@@ -1,12 +1,15 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 with lib; let
   cfg = config.blackmatter.components.nvim.plugin.groups.common;
-  common = import ../../common;
-  configPath = "${common.includesPath}/common";
+  groupTree = (import ../../../lib/group-files.nix { inherit lib pkgs; }) {
+    name = "common";
+    src = ./.;
+  };
 in {
   options.blackmatter.components.nvim.plugin.groups.common = {
     enable = mkEnableOption "plugins that should always be included";
@@ -16,13 +19,8 @@ in {
     (
       mkIf cfg.enable
       {
-        home.file."${configPath}/init.lua".source = ./init.lua;
-        home.file."${configPath}/settings.lua".source = ./settings.lua;
-        home.file."${configPath}/autocmds.lua".source = ./autocmds.lua;
-        home.file."${configPath}/undo.lua".source = ./undo.lua;
-        home.file."${configPath}/performance.lua".source = ./performance.lua;
-        home.file."${configPath}/trim-whitespace.lua".source = ./trim-whitespace.lua;
-        home.file."${configPath}/which-key.lua".source = ./which-key.lua;
+        # One directory symlink instead of 7 per-file home.file entries.
+        xdg.configFile."nvim/lua/groups/common".source = groupTree;
         blackmatter.components.nvim.plugins = {
           nvim-lua."plenary.nvim".enable = true;
           nvim-tree.nvim-web-devicons.enable = true;

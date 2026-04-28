@@ -1,12 +1,15 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 with lib; let
   cfg = config.blackmatter.components.nvim.plugin.groups.theming;
-  common = import ../../common;
-  configPath = "${common.includesPath}/theming";
+  groupTree = (import ../../../lib/group-files.nix { inherit lib pkgs; }) {
+    name = "theming";
+    src = ./.;
+  };
 in {
   options.blackmatter.components.nvim.plugin.groups.theming = {
     enable = mkEnableOption "theming";
@@ -16,21 +19,9 @@ in {
     (
       mkIf cfg.enable
       {
-        home.file."${configPath}/init.lua".source = ./init.lua;
-        home.file."${configPath}/bufferline.lua".source = ./bufferline.lua;
-        home.file."${configPath}/lualine.lua".source = ./lualine.lua;
-        home.file."${configPath}/noice.lua".source = ./noice.lua;
-        home.file."${configPath}/colorscheme.lua".source = ./colorscheme.lua;
-        home.file."${configPath}/nui.lua".source = ./nui.lua;
-        home.file."${configPath}/border.lua".source = ./border.lua;
-        home.file."${configPath}/input.lua".source = ./input.lua;
-        home.file."${configPath}/menu.lua".source = ./menu.lua;
-        home.file."${configPath}/popup.lua".source = ./popup.lua;
-        home.file."${configPath}/notify.lua".source = ./notify.lua;
-        home.file."${configPath}/devicons.lua".source = ./devicons.lua;
-        home.file."${configPath}/snacks.lua".source = ./snacks.lua;
-        home.file."${configPath}/gitsigns.lua".source = ./gitsigns.lua;
-        home.file."${configPath}/indent-blankline.lua".source = ./indent-blankline.lua;
+        # One directory symlink instead of 15 per-file home.file entries.
+        # See lib/group-files.nix.
+        xdg.configFile."nvim/lua/groups/theming".source = groupTree;
         blackmatter.components.nvim.plugins = {
           NvChad."nvim-colorizer.lua".enable = true;
           nvim-lualine."lualine.nvim".enable = true;

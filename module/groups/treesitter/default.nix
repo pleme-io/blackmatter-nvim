@@ -1,12 +1,15 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 with lib; let
   cfg = config.blackmatter.components.nvim.plugin.groups.treesitter;
-  common = import ../../common;
-  configPath = "${common.includesPath}/treesitter";
+  groupTree = (import ../../../lib/group-files.nix { inherit lib pkgs; }) {
+    name = "treesitter";
+    src = ./.;
+  };
 in {
   options.blackmatter.components.nvim.plugin.groups.treesitter = {
     enable = mkEnableOption "treesitter";
@@ -18,11 +21,8 @@ in {
     (
       mkIf cfg.enable
       {
-        home.file."${configPath}/init.lua".source = ./init.lua;
-        home.file."${configPath}/parsers.lua".source = ./parsers.lua;
-        home.file."${configPath}/setup.lua".source = ./setup.lua;
-        home.file."${configPath}/filetype.lua".source = ./filetype.lua;
-        home.file."${configPath}/commentstring.lua".source = ./commentstring.lua;
+        # One directory symlink instead of 5 per-file home.file entries.
+        xdg.configFile."nvim/lua/groups/treesitter".source = groupTree;
         blackmatter.components.nvim.plugins = {
           nvim-treesitter.nvim-treesitter.enable = true;
           nvim-treesitter.nvim-treesitter-textobjects.enable = true;
