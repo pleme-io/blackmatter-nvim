@@ -7,7 +7,7 @@ function M.setup()
   --   nord   (default) — vivid Nord aurora-green (#A3BE8C) → frost-cyan
   --                      (#88C0D0), matching the ghostty Nord screenshot.
   --   vellum           — warm Vellum cyan (#94BBB8) → green (#A9BB8C) (saved).
-  -- Rendered via terminal section for ANSI color support + cascade animation.
+  -- Rendered with nvim highlight groups (a `text` section), not a shell cmd.
   local fleet_theme = (function()
     local ok, cs = pcall(require, "groups.theming.colorscheme")
     if ok and cs.theme then return cs.theme end
@@ -30,56 +30,47 @@ function M.setup()
     "    ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝",
   }
 
-  -- nord:   vivid Nord green #A3BE8C (163,190,140) → frost cyan #88C0D0 (136,192,208)
-  -- vellum: warm cyan #94BBB8 (148,187,184) → green #A9BB8C (169,187,140)
-  local gradient_nord = {
-    { 163, 190, 140 }, { 158, 190, 154 }, { 152, 191, 167 },
-    { 147, 191, 181 }, { 141, 192, 194 }, { 136, 192, 208 },
-    nil, -- empty line
-    { 163, 190, 140 }, { 158, 190, 154 }, { 152, 191, 167 },
-    { 147, 191, 181 }, { 141, 192, 194 }, { 136, 192, 208 },
-  }
-  local gradient_vellum = {
-    { 148, 187, 184 }, { 152, 187, 175 }, { 156, 187, 166 },
-    { 160, 187, 157 }, { 164, 187, 149 }, { 169, 187, 140 },
-    nil, -- empty line
-    { 148, 187, 184 }, { 152, 187, 175 }, { 156, 187, 166 },
-    { 160, 187, 157 }, { 164, 187, 149 }, { 169, 187, 140 },
-  }
-  local gradient = (fleet_theme == "vellum") and gradient_vellum or gradient_nord
+  -- 6-stop green→cyan gradient per theme, applied as nvim HIGHLIGHT GROUPS
+  -- (gui colors) — NOT a shell `printf` cmd. The old `section = "terminal"`
+  -- approach ran `printf '\033[38;2;..m'; echo; sleep` through nvim's &shell
+  -- (= frostmourne in mado), which never rendered the BLACK MATTER block in
+  -- mado (frostmourne rc-load / printf timing). Highlight groups are pure
+  -- nvim: no shell, no printf, no sleep — identical + reliable in mado AND
+  -- ghostty, and they honor termguicolors directly (no SGR round-trip).
+  local grad_hex = (fleet_theme == "vellum")
+    and { "#94BBB8", "#98BBAF", "#9CBBA6", "#A0BB9D", "#A4BB94", "#A9BB8C" }
+    or  { "#A3BE8C", "#9EBE9A", "#98BFA7", "#93BFB5", "#8DC0C2", "#88C0D0" }
+  -- Separator + tagline per theme (Nord border/snow | Vellum border/dim).
+  local sep_hex = (fleet_theme == "vellum") and "#6E6857" or "#4C566A"
+  local tag_hex = (fleet_theme == "vellum") and "#ADA593" or "#D8DEE9"
+  -- Set the logo highlight groups AND re-set them on every ColorScheme:
+  -- the base `:colorscheme nord` does `hi clear`, which would wipe these
+  -- custom groups if the dashboard happened to configure before the
+  -- colorscheme. The autocmd makes the logo colors survive any (re)load.
+  local function set_logo_hl()
+    for i, hex in ipairs(grad_hex) do
+      vim.api.nvim_set_hl(0, "MadoDashLogo" .. i, { fg = hex, bold = true })
+    end
+    vim.api.nvim_set_hl(0, "MadoDashSep", { fg = sep_hex })
+    vim.api.nvim_set_hl(0, "MadoDashTag", { fg = tag_hex, bold = true })
+  end
+  set_logo_hl()
+  vim.api.nvim_create_autocmd("ColorScheme", { callback = set_logo_hl })
 
-  local parts = {}
+  -- The 13 logo lines map onto the 6 gradient stops (each half spans the
+  -- full gradient; the blank line between the words gets no highlight).
+  local grad_for = { 1, 2, 3, 4, 5, 6, nil, 1, 2, 3, 4, 5, 6 }
+  local logo_text = {}
   for i, line in ipairs(logo) do
     if line == "" then
-      parts[#parts + 1] = "echo ''"
+      logo_text[#logo_text + 1] = { "\n" }
     else
-      local c = gradient[i]
-      parts[#parts + 1] = string.format(
-        [[printf '\033[38;2;%d;%d;%dm'; echo '%s'; sleep 0.015]],
-        c[1], c[2], c[3], line
-      )
+      logo_text[#logo_text + 1] = { line .. "\n", hl = "MadoDashLogo" .. grad_for[i] }
     end
   end
-  -- Tagline + separator follow the theme:
-  --   nord   — separator Nord border #4C566A (76,86,106), tagline snow #D8DEE9 (216,222,233)
-  --   vellum — separator border #6E6857 (110,104,87), tagline dim #ADA593 (173,165,147)
-  local sep_rgb, tag_rgb
-  if fleet_theme == "vellum" then
-    sep_rgb, tag_rgb = { 110, 104, 87 }, { 173, 165, 147 }
-  else
-    sep_rgb, tag_rgb = { 76, 86, 106 }, { 216, 222, 233 }
-  end
-  parts[#parts + 1] = "echo ''"
-  parts[#parts + 1] = string.format(
-    [[printf '\033[38;2;%d;%d;%dm'; echo '              ─────────────────────────────']],
-    sep_rgb[1], sep_rgb[2], sep_rgb[3]
-  )
-  parts[#parts + 1] = string.format(
-    [[printf '\033[38;2;%d;%d;%dm'; echo '                    neovim, refined']],
-    tag_rgb[1], tag_rgb[2], tag_rgb[3]
-  )
-  parts[#parts + 1] = [[printf '\033[0m']]
-  local logo_cmd = table.concat(parts, "; ")
+  logo_text[#logo_text + 1] = { "\n" }
+  logo_text[#logo_text + 1] = { "    ─────────────────────────────\n", hl = "MadoDashSep" }
+  logo_text[#logo_text + 1] = { "          neovim, refined\n", hl = "MadoDashTag" }
 
   Snacks.setup({
     notifications = { enabled = true, timeout = 3000 },
@@ -106,7 +97,7 @@ function M.setup()
         },
       },
       sections = {
-        { section = "terminal", cmd = logo_cmd, height = 16, padding = 2 },
+        { section = "text", text = logo_text, padding = 2 },
         { section = "keys", gap = 1, padding = 2 },
         { section = "recent_files", title = "Recent Files", icon = " ", limit = 8, padding = 2 },
         { section = "startup" },
