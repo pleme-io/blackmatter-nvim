@@ -11,8 +11,8 @@ function M.setup()
     },
     ignore_filetypes = { "help" },
     color = {
-      suggestion_color = "#5E81AC", -- Nord blue for AI suggestions
-      cterm = 244,
+      suggestion_color = "#B29EC4", -- Vellum agent-accent violet for AI suggestions
+      cterm = 140,
     },
     log_level = "off", -- Set to "info" for debugging
     disable_inline_completion = false, -- Show inline completions
