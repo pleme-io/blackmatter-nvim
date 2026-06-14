@@ -1,55 +1,48 @@
 local M = {}
 
--- ── Vellum lualine theme ─────────────────────────────────────────────────
--- Inline theme so the statusline shows warm colored pills (fixes the
--- "all-white lualine" the operator saw when `theme = "nord"` collapsed).
--- Mode colors use DARK text (#16140E) on bright Vellum accents; sections b/c
--- sit on the surface tone. cterm twins included so it stays colored without
+-- ── Fleet-themed lualine theme ───────────────────────────────────────────
+-- Inline theme so the statusline shows colored pills (fixes the "all-white
+-- lualine" the operator saw when `theme = "nord"` collapsed). Mode colors use
+-- DARK ink on bright accents; sections b/c sit on the surface tone. The whole
+-- theme is derived from the ACTIVE palette in groups.theming.colorscheme, so
+-- it follows the FLEET_THEME selector (classic Nord by default, warm Vellum
+-- when FLEET_THEME=vellum). cterm twins included so it stays colored without
 -- truecolor.
-local vellum = {
-  bg_dark   = { gui = "#16140E", cterm = 233 }, -- ink (dark text on pills)
-  surface   = { gui = "#1F1C15", cterm = 234 }, -- section b/c bg
-  selection = { gui = "#2B2820", cterm = 235 },
-  fg        = { gui = "#CDC7B6", cterm = 187 }, -- section b/c fg
-  cyan      = { gui = "#94BBB8", cterm = 109 }, -- normal
-  green     = { gui = "#A9BB8C", cterm = 144 }, -- insert
-  purple    = { gui = "#B8A1B9", cterm = 139 }, -- visual
-  red       = { gui = "#C9837B", cterm = 174 }, -- replace
-  yellow    = { gui = "#D7C489", cterm = 180 }, -- command
-}
+local cs = require("groups.theming.colorscheme")
+local p  = cs.palette
 
 -- pill(accent) → a {a,b,c} section spec for one mode, dark ink on the accent.
 local function pill(accent)
   return {
-    a = { fg = vellum.bg_dark.gui, bg = accent.gui,
-          ctermfg = vellum.bg_dark.cterm, ctermbg = accent.cterm, gui = "bold" },
-    b = { fg = vellum.fg.gui, bg = vellum.surface.gui,
-          ctermfg = vellum.fg.cterm, ctermbg = vellum.surface.cterm },
-    c = { fg = vellum.fg.gui, bg = vellum.surface.gui,
-          ctermfg = vellum.fg.cterm, ctermbg = vellum.surface.cterm },
+    a = { fg = p.bg.gui, bg = accent.gui,
+          ctermfg = p.bg.cterm, ctermbg = accent.cterm, gui = "bold" },
+    b = { fg = p.fg.gui, bg = p.surface.gui,
+          ctermfg = p.fg.cterm, ctermbg = p.surface.cterm },
+    c = { fg = p.fg.gui, bg = p.surface.gui,
+          ctermfg = p.fg.cterm, ctermbg = p.surface.cterm },
   }
 end
 
-local vellum_theme = {
-  normal   = pill(vellum.cyan),
-  insert   = pill(vellum.green),
-  visual   = pill(vellum.purple),
-  replace  = pill(vellum.red),
-  command  = pill(vellum.yellow),
+local fleet_theme = {
+  normal   = pill(p.cyan),
+  insert   = pill(p.green),
+  visual   = pill(p.purple),
+  replace  = pill(p.red),
+  command  = pill(p.yellow),
   inactive = {
-    a = { fg = vellum.fg.gui, bg = vellum.selection.gui,
-          ctermfg = vellum.fg.cterm, ctermbg = vellum.selection.cterm },
-    b = { fg = vellum.fg.gui, bg = vellum.selection.gui,
-          ctermfg = vellum.fg.cterm, ctermbg = vellum.selection.cterm },
-    c = { fg = vellum.fg.gui, bg = vellum.selection.gui,
-          ctermfg = vellum.fg.cterm, ctermbg = vellum.selection.cterm },
+    a = { fg = p.fg.gui, bg = p.selection.gui,
+          ctermfg = p.fg.cterm, ctermbg = p.selection.cterm },
+    b = { fg = p.fg.gui, bg = p.selection.gui,
+          ctermfg = p.fg.cterm, ctermbg = p.selection.cterm },
+    c = { fg = p.fg.gui, bg = p.selection.gui,
+          ctermfg = p.fg.cterm, ctermbg = p.selection.cterm },
   },
 }
 
 function M.setup()
   require("lualine").setup({
     options = {
-      theme              = vellum_theme,
+      theme              = fleet_theme,
       section_separators = { left = "", right = "" },
       component_separators = { left = "", right = "" },
       icons_enabled      = true,
@@ -63,19 +56,19 @@ function M.setup()
           "diff",
           symbols = { added = " ", modified = " ", removed = " " },
           diff_color = {
-            added    = { fg = "#A9BB8C" },
-            modified = { fg = "#D7C489" },
-            removed  = { fg = "#C9837B" },
+            added    = { fg = p.green.gui },
+            modified = { fg = p.yellow.gui },
+            removed  = { fg = p.red.gui },
           },
         },
         {
           "diagnostics",
           symbols = { error = " ", warn = " ", info = " ", hint = "󰌵 " },
           diagnostics_color = {
-            error = { fg = "#C9837B" },
-            warn  = { fg = "#D7C489" },
-            info  = { fg = "#94BBB8" },
-            hint  = { fg = "#A9BB8C" },
+            error = { fg = p.red.gui },
+            warn  = { fg = p.yellow.gui },
+            info  = { fg = p.cyan.gui },
+            hint  = { fg = p.green.gui },
           },
         },
       },

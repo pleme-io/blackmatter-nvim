@@ -1,6 +1,9 @@
 local M = {}
 function M.setup()
   local notify = require("notify")
+  -- Background from the ACTIVE palette so notifications follow the FLEET_THEME
+  -- selector (Nord bg #2E3440 by default, Vellum #16140E when FLEET_THEME=vellum).
+  local bg = require("groups.theming.colorscheme").palette.bg.gui
   notify.setup({
     -- filter out LSP deprecation warnings
     filter = function(msg, level, opts)
@@ -18,7 +21,7 @@ function M.setup()
     timeout           = 3000,
     max_width         = 60,
     top_down          = true,
-    background_colour = "#16140E",
+    background_colour = bg,
     fps               = 60,
   })
 

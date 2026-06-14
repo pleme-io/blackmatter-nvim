@@ -51,11 +51,14 @@ function M.setup()
     end,
   })
 
-  -- Vellum highlight colors (cterm twins so signs stay colored without truecolor)
-  vim.api.nvim_set_hl(0, "GitSignsAdd", { fg = "#A9BB8C", ctermfg = 144 })
-  vim.api.nvim_set_hl(0, "GitSignsChange", { fg = "#D7C489", ctermfg = 180 })
-  vim.api.nvim_set_hl(0, "GitSignsDelete", { fg = "#C9837B", ctermfg = 174 })
-  vim.api.nvim_set_hl(0, "GitSignsChangedelete", { fg = "#B8A1B9", ctermfg = 139 })
-  vim.api.nvim_set_hl(0, "GitSignsTopdelete", { fg = "#C9837B", ctermfg = 174 })
+  -- Sign colors from the ACTIVE palette so they follow the FLEET_THEME
+  -- selector (classic Nord by default, warm Vellum when FLEET_THEME=vellum).
+  -- cterm twins keep signs colored without truecolor.
+  local p = require("groups.theming.colorscheme").palette
+  vim.api.nvim_set_hl(0, "GitSignsAdd",          { fg = p.green.gui,  ctermfg = p.green.cterm })
+  vim.api.nvim_set_hl(0, "GitSignsChange",       { fg = p.yellow.gui, ctermfg = p.yellow.cterm })
+  vim.api.nvim_set_hl(0, "GitSignsDelete",       { fg = p.red.gui,    ctermfg = p.red.cterm })
+  vim.api.nvim_set_hl(0, "GitSignsChangedelete", { fg = p.purple.gui, ctermfg = p.purple.cterm })
+  vim.api.nvim_set_hl(0, "GitSignsTopdelete",    { fg = p.red.gui,    ctermfg = p.red.cterm })
 end
 return M

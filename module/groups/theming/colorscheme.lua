@@ -1,11 +1,23 @@
 local M = {}
 
--- ── Vellum palette ───────────────────────────────────────────────────────
--- Warm aged-paper Nord-matte. Every value carries a gui hex AND the nearest
--- xterm-256 cterm index, so highlights stay colored even when termguicolors
--- is off (no truecolor terminal). cterm indices are approximate by design —
--- the goal is "never uncolored", not exact reproduction.
-local p = {
+-- ── Fleet theme selector ─────────────────────────────────────────────────
+-- "nord"   (default) — classic Nord, renders IDENTICALLY to ghostty's Nord
+--                      (bg #2E3440, fg #ECEFF4, Nord aurora/frost syntax).
+-- "vellum"          — warm aged-paper Nord-matte (the saved alternate ground).
+-- Select at launch with the FLEET_THEME env var, e.g. `FLEET_THEME=vellum nvim`.
+-- This single flag is the source of truth — every theme-coupled satellite
+-- module (lualine / bufferline / gitsigns / indent-blankline / border /
+-- notify / the snacks dashboard logo) reads the resolved palette below,
+-- so flipping FLEET_THEME repaints the whole UI in one place.
+local FLEET_THEME = (vim.env.FLEET_THEME ~= nil and vim.env.FLEET_THEME ~= "" and vim.env.FLEET_THEME) or "nord"
+M.theme = FLEET_THEME
+
+-- ── Vellum palette (warm aged-paper, saved) ──────────────────────────────
+-- Every value carries a gui hex AND the nearest xterm-256 cterm index, so
+-- highlights stay colored even when termguicolors is off (no truecolor
+-- terminal). cterm indices are approximate by design — the goal is "never
+-- uncolored", not exact reproduction.
+local vellum = {
   bg          = { gui = "#16140E", cterm = 233 },
   surface     = { gui = "#1F1C15", cterm = 234 },
   selection   = { gui = "#2B2820", cterm = 235 },
@@ -26,18 +38,48 @@ local p = {
   border      = { gui = "#6E6857", cterm = 240 },
 }
 
--- ── Vellum content accents (vivid Nord) ──────────────────────────────────
--- The palette above (p) is intentionally desaturated for CHROME — borders,
--- pills, gutter signs, the matte aged-paper UI the operator loves. Those
--- muted tones are WRONG for code: on the dark #16140E parchment ground a
--- keyword, a string, a type and a function name all collapse into the same
--- dim sage/olive wash.
+-- ── Nord palette (classic, matches ghostty exactly) ──────────────────────
+-- Ground = Nord polar-night / snow-storm; chrome accents = Nord frost/aurora.
+-- These hexes are byte-identical to ghostty's deployed Nord palette so nvim's
+-- own background (#2E3440), fg (#ECEFF4), cursor (#88C0D0) and selection
+-- (#4C566A) match the surrounding terminal pixel-for-pixel. cterm twins pin
+-- the nearest xterm-256 index so a non-truecolor session still shows Nord.
+local nord = {
+  bg          = { gui = "#2E3440", cterm = 236 }, -- polar night nord0
+  surface     = { gui = "#3B4252", cterm = 237 }, -- polar night nord1 (cursorline/float)
+  selection   = { gui = "#434C5E", cterm = 238 }, -- polar night nord2 (visual)
+  comment     = { gui = "#616E88", cterm = 60  }, -- Nord muted comment blue-grey
+  dim         = { gui = "#D8DEE9", cterm = 188 }, -- snow storm nord4
+  fg          = { gui = "#ECEFF4", cterm = 255 }, -- snow storm nord6
+  fg_plus     = { gui = "#ECEFF4", cterm = 255 },
+  fg_plus2    = { gui = "#ECEFF4", cterm = 231 },
+  red         = { gui = "#BF616A", cterm = 167 }, -- aurora red
+  orange      = { gui = "#D08770", cterm = 173 }, -- aurora orange
+  yellow      = { gui = "#EBCB8B", cterm = 222 }, -- aurora yellow
+  green       = { gui = "#A3BE8C", cterm = 108 }, -- aurora green
+  cyan        = { gui = "#88C0D0", cterm = 116 }, -- frost nord8
+  blue        = { gui = "#81A1C1", cterm = 110 }, -- frost nord9
+  purple      = { gui = "#B48EAD", cterm = 139 }, -- aurora purple
+  brown       = { gui = "#D08770", cterm = 173 }, -- (no Nord brown — reuse orange)
+  cursor      = { gui = "#88C0D0", cterm = 116 }, -- ghostty cursor = nord8
+  border      = { gui = "#4C566A", cterm = 240 }, -- polar night nord3 (selection-bg)
+}
+
+-- The active CHROME/GROUND palette. nord by default, vellum when selected.
+local p = (FLEET_THEME == "vellum") and vellum or nord
+
+-- ── Content accents (vivid Nord) ─────────────────────────────────────────
+-- The chrome palette `p` is intentionally low-contrast for borders, pills,
+-- gutter signs. Those muted tones are WRONG for code: a keyword, a string,
+-- a type and a function name would collapse into one dim wash.
 --
 -- `c` is the separate CODE palette: the vivid Nord "content" 16 (the fleet
 -- keystone `ishou_tokens::Palette::content_ansi_16()`). These paint SYNTAX
--- and TREESITTER groups only — chrome keeps using `p`. cterm twins are tuned
--- to bright 256-color approximations so a non-truecolor session still
--- differentiates keyword vs string vs function vs type.
+-- and TREESITTER groups only — chrome keeps using `p`. The content accents
+-- are the SAME under both grounds (they are already classic Nord), so syntax
+-- stays vivid Nord whether the ground is parchment or polar-night. cterm
+-- twins are tuned to bright 256-color approximations so a non-truecolor
+-- session still differentiates keyword vs string vs function vs type.
 local c = {
   red     = { gui = "#BF616A", cterm = 167 }, -- error / removed
   green   = { gui = "#A3BE8C", cterm = 108 }, -- string / added
@@ -77,21 +119,39 @@ local function hl(group, spec)
   vim.api.nvim_set_hl(0, group, out)
 end
 
--- Expose the palettes so this module's hl() and others can reuse them.
-M.palette = p
-M.content = c
+-- Expose the palettes so this module's hl() and the theme-coupled satellite
+-- modules (lualine / bufferline / gitsigns / indent-blankline / border /
+-- notify / snacks dashboard) can reuse the ACTIVE palette.
+--   M.palette  — resolved CHROME/GROUND palette (nord by default, vellum when
+--                FLEET_THEME=vellum); each entry is { gui = "#…", cterm = N }.
+--   M.content  — vivid Nord CODE accents (same under both grounds).
+--   M.theme    — the active selector ("nord" | "vellum").
+-- Both raw palettes stay exported so a satellite can pin a specific ground or
+-- so the Vellum theme is never lost — it is restorable via FLEET_THEME=vellum.
+M.palette       = p
+M.content       = c
+M.palette_nord  = nord
+M.palette_vellum = vellum
 
 function M.setup()
-  -- Load the base colorscheme defensively. nord.nvim is the base the Vellum
-  -- overrides sit on; if it ever fails to load (plugin missing, runtime error)
-  -- we fall back to the built-in habamax so we are NEVER left on the bare
-  -- terminal default. Either way the overrides below run.
+  -- Load the base colorscheme defensively. nord.nvim is the base our overrides
+  -- sit on; if it ever fails to load (plugin missing, runtime error) we fall
+  -- back to the built-in habamax so we are NEVER left on the bare terminal
+  -- default. Either way the overrides below run.
+  --
+  -- Under FLEET_THEME=nord (default) the base nord.nvim already provides the
+  -- classic Nord ground that matches ghostty; our `p` override re-pins that
+  -- exact ground (bg #2E3440 / fg #ECEFF4 / etc.) so every chrome group is
+  -- guaranteed Nord even if the plugin's defaults drift, and the satellite
+  -- modules read the same resolved palette. Under FLEET_THEME=vellum the same
+  -- override block instead paints the warm parchment ground.
   local ok = pcall(vim.cmd, "colorscheme nord")
   if not ok then
     pcall(vim.cmd, "colorscheme habamax")
     vim.schedule(function()
       vim.notify(
-        "[theming] base colorscheme 'nord' failed to load — using 'habamax' fallback; Vellum overrides still applied",
+        "[theming] base colorscheme 'nord' failed to load — using 'habamax' fallback; "
+          .. M.theme .. " overrides still applied",
         vim.log.levels.WARN
       )
     end)
@@ -230,12 +290,12 @@ function M.setup()
   hl("LspSignatureActiveParameter", { fg = p.yellow, bold = true, underline = true })
 
   -- ── Vivid content syntax (legacy regex groups) ────────────────────────
-  -- The base nord.nvim syntax palette washes out on Vellum's dark #16140E
-  -- ground — keyword/string/type/function all read as one dim tone. We
-  -- repaint the legacy syntax groups (used by vim regex syntax, e.g. the
+  -- Repaint the legacy syntax groups (used by vim regex syntax, e.g. the
   -- nix.vim highlighter — treesitter is disabled for nix) with the vivid
-  -- Nord CONTENT palette `c`. Comments stay the dim parchment p.comment;
-  -- Normal fg/bg are untouched above (the parchment ground is preserved).
+  -- Nord CONTENT palette `c`. These accents are identical under both grounds,
+  -- so syntax stays vivid classic Nord whether the ground is nord polar-night
+  -- (default) or warm parchment (FLEET_THEME=vellum). Comments use the active
+  -- ground's muted comment tone (p.comment); Normal fg/bg untouched above.
   hl("Comment",        { fg = p.comment, italic = true })
 
   hl("Constant",       { fg = c.orange })

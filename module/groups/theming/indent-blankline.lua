@@ -3,9 +3,12 @@ function M.setup()
   local has_ibl, ibl = pcall(require, "ibl")
   if not has_ibl then return end
 
-  -- Define subtle highlight groups for indent guides (Vellum + cterm twins)
-  vim.api.nvim_set_hl(0, "IblIndent", { fg = "#2B2820", ctermfg = 235 })
-  vim.api.nvim_set_hl(0, "IblScope", { fg = "#6E6857", ctermfg = 240 })
+  -- Subtle indent-guide highlights from the ACTIVE palette so they follow the
+  -- FLEET_THEME selector (Nord by default, Vellum when FLEET_THEME=vellum).
+  -- cterm twins keep guides visible without truecolor.
+  local p = require("groups.theming.colorscheme").palette
+  vim.api.nvim_set_hl(0, "IblIndent", { fg = p.selection.gui, ctermfg = p.selection.cterm })
+  vim.api.nvim_set_hl(0, "IblScope",  { fg = p.border.gui,    ctermfg = p.border.cterm })
 
   ibl.setup({
     indent = {

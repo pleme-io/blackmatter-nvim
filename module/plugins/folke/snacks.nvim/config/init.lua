@@ -2,8 +2,18 @@ local M = {}
 function M.setup()
   local Snacks = require("snacks")
 
-  -- Gradient ASCII logo: Vellum cyan (#94BBB8) → Vellum green (#A9BB8C)
-  -- Rendered via terminal section for ANSI color support + cascade animation
+  -- Gradient ASCII logo. The gradient follows the FLEET_THEME selector owned
+  -- by groups.theming.colorscheme:
+  --   nord   (default) — vivid Nord aurora-green (#A3BE8C) → frost-cyan
+  --                      (#88C0D0), matching the ghostty Nord screenshot.
+  --   vellum           — warm Vellum cyan (#94BBB8) → green (#A9BB8C) (saved).
+  -- Rendered via terminal section for ANSI color support + cascade animation.
+  local fleet_theme = (function()
+    local ok, cs = pcall(require, "groups.theming.colorscheme")
+    if ok and cs.theme then return cs.theme end
+    return (vim.env.FLEET_THEME ~= nil and vim.env.FLEET_THEME ~= "" and vim.env.FLEET_THEME) or "nord"
+  end)()
+
   local logo = {
     "    ██████╗ ██╗      █████╗  ██████╗██╗  ██╗",
     "    ██╔══██╗██║     ██╔══██╗██╔════╝██║ ██╔╝",
@@ -20,14 +30,23 @@ function M.setup()
     "    ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝",
   }
 
-  -- Vellum cyan #94BBB8 (148,187,184) → Vellum green #A9BB8C (169,187,140)
-  local gradient = {
+  -- nord:   vivid Nord green #A3BE8C (163,190,140) → frost cyan #88C0D0 (136,192,208)
+  -- vellum: warm cyan #94BBB8 (148,187,184) → green #A9BB8C (169,187,140)
+  local gradient_nord = {
+    { 163, 190, 140 }, { 158, 190, 154 }, { 152, 191, 167 },
+    { 147, 191, 181 }, { 141, 192, 194 }, { 136, 192, 208 },
+    nil, -- empty line
+    { 163, 190, 140 }, { 158, 190, 154 }, { 152, 191, 167 },
+    { 147, 191, 181 }, { 141, 192, 194 }, { 136, 192, 208 },
+  }
+  local gradient_vellum = {
     { 148, 187, 184 }, { 152, 187, 175 }, { 156, 187, 166 },
     { 160, 187, 157 }, { 164, 187, 149 }, { 169, 187, 140 },
     nil, -- empty line
     { 148, 187, 184 }, { 152, 187, 175 }, { 156, 187, 166 },
     { 160, 187, 157 }, { 164, 187, 149 }, { 169, 187, 140 },
   }
+  local gradient = (fleet_theme == "vellum") and gradient_vellum or gradient_nord
 
   local parts = {}
   for i, line in ipairs(logo) do
@@ -41,10 +60,24 @@ function M.setup()
       )
     end
   end
-  -- Tagline in Vellum dim (#ADA593) with breathing room; separator in border (#6E6857)
+  -- Tagline + separator follow the theme:
+  --   nord   — separator Nord border #4C566A (76,86,106), tagline snow #D8DEE9 (216,222,233)
+  --   vellum — separator border #6E6857 (110,104,87), tagline dim #ADA593 (173,165,147)
+  local sep_rgb, tag_rgb
+  if fleet_theme == "vellum" then
+    sep_rgb, tag_rgb = { 110, 104, 87 }, { 173, 165, 147 }
+  else
+    sep_rgb, tag_rgb = { 76, 86, 106 }, { 216, 222, 233 }
+  end
   parts[#parts + 1] = "echo ''"
-  parts[#parts + 1] = [[printf '\033[38;2;110;104;87m'; echo '              ─────────────────────────────']]
-  parts[#parts + 1] = [[printf '\033[38;2;173;165;147m'; echo '                    neovim, refined']]
+  parts[#parts + 1] = string.format(
+    [[printf '\033[38;2;%d;%d;%dm'; echo '              ─────────────────────────────']],
+    sep_rgb[1], sep_rgb[2], sep_rgb[3]
+  )
+  parts[#parts + 1] = string.format(
+    [[printf '\033[38;2;%d;%d;%dm'; echo '                    neovim, refined']],
+    tag_rgb[1], tag_rgb[2], tag_rgb[3]
+  )
   parts[#parts + 1] = [[printf '\033[0m']]
   local logo_cmd = table.concat(parts, "; ")
 
