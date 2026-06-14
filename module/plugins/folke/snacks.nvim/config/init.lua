@@ -97,7 +97,10 @@ function M.setup()
         },
       },
       sections = {
-        { section = "text", text = logo_text, padding = 2 },
+        -- A raw-text block (logo): NO `section` key — snacks has no "text"
+        -- section type; an item with `text` and no `section`/`[1]` renders
+        -- directly as a block (snacks dashboard.lua resolve()).
+        { text = logo_text, padding = 2 },
         { section = "keys", gap = 1, padding = 2 },
         { section = "recent_files", title = "Recent Files", icon = " ", limit = 8, padding = 2 },
         { section = "startup" },
