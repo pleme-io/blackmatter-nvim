@@ -26,6 +26,29 @@ local p = {
   border      = { gui = "#6E6857", cterm = 240 },
 }
 
+-- ── Vellum content accents (vivid Nord) ──────────────────────────────────
+-- The palette above (p) is intentionally desaturated for CHROME — borders,
+-- pills, gutter signs, the matte aged-paper UI the operator loves. Those
+-- muted tones are WRONG for code: on the dark #16140E parchment ground a
+-- keyword, a string, a type and a function name all collapse into the same
+-- dim sage/olive wash.
+--
+-- `c` is the separate CODE palette: the vivid Nord "content" 16 (the fleet
+-- keystone `ishou_tokens::Palette::content_ansi_16()`). These paint SYNTAX
+-- and TREESITTER groups only — chrome keeps using `p`. cterm twins are tuned
+-- to bright 256-color approximations so a non-truecolor session still
+-- differentiates keyword vs string vs function vs type.
+local c = {
+  red     = { gui = "#BF616A", cterm = 167 }, -- error / removed
+  green   = { gui = "#A3BE8C", cterm = 108 }, -- string / added
+  yellow  = { gui = "#EBCB8B", cterm = 222 }, -- class / search
+  blue    = { gui = "#81A1C1", cterm = 110 }, -- function name (bright frost-3)
+  blue_dk = { gui = "#5E81AC", cterm = 67 },  -- deeper blue (namespace/builtin fn)
+  magenta = { gui = "#B48EAD", cterm = 139 }, -- keyword / statement
+  cyan    = { gui = "#88C0D0", cterm = 116 }, -- type / special
+  orange  = { gui = "#D08770", cterm = 173 }, -- number / constant / parameter
+}
+
 -- hl(group, spec) — spec keys fg/bg are Vellum palette entries (or the
 -- literal "NONE"); every gui color gets its cterm twin written automatically,
 -- so no override is ever gui-only. Style flags (bold/italic/...) pass through.
@@ -54,8 +77,9 @@ local function hl(group, spec)
   vim.api.nvim_set_hl(0, group, out)
 end
 
--- Expose the palette so this module's hl() and others can reuse it.
+-- Expose the palettes so this module's hl() and others can reuse them.
 M.palette = p
+M.content = c
 
 function M.setup()
   -- Load the base colorscheme defensively. nord.nvim is the base the Vellum
@@ -204,6 +228,168 @@ function M.setup()
 
   -- lsp signature active parameter — stand out in param list
   hl("LspSignatureActiveParameter", { fg = p.yellow, bold = true, underline = true })
+
+  -- ── Vivid content syntax (legacy regex groups) ────────────────────────
+  -- The base nord.nvim syntax palette washes out on Vellum's dark #16140E
+  -- ground — keyword/string/type/function all read as one dim tone. We
+  -- repaint the legacy syntax groups (used by vim regex syntax, e.g. the
+  -- nix.vim highlighter — treesitter is disabled for nix) with the vivid
+  -- Nord CONTENT palette `c`. Comments stay the dim parchment p.comment;
+  -- Normal fg/bg are untouched above (the parchment ground is preserved).
+  hl("Comment",        { fg = p.comment, italic = true })
+
+  hl("Constant",       { fg = c.orange })
+  hl("String",         { fg = c.green })
+  hl("Character",      { fg = c.green })
+  hl("Number",         { fg = c.orange })
+  hl("Boolean",        { fg = c.orange })
+  hl("Float",          { fg = c.orange })
+
+  hl("Identifier",     { fg = p.fg })
+  hl("Function",       { fg = c.blue })
+
+  hl("Statement",      { fg = c.magenta })
+  hl("Conditional",    { fg = c.magenta })
+  hl("Repeat",         { fg = c.magenta })
+  hl("Label",          { fg = c.magenta })
+  hl("Operator",       { fg = c.cyan })
+  hl("Keyword",        { fg = c.magenta })
+  hl("Exception",      { fg = c.magenta })
+
+  hl("PreProc",        { fg = c.cyan })
+  hl("Include",        { fg = c.magenta })
+  hl("Define",         { fg = c.magenta })
+  hl("Macro",          { fg = c.cyan })
+  hl("PreCondit",      { fg = c.cyan })
+
+  hl("Type",           { fg = c.cyan })
+  hl("StorageClass",   { fg = c.cyan })
+  hl("Structure",      { fg = c.cyan })
+  hl("Typedef",        { fg = c.cyan })
+
+  hl("Special",        { fg = c.cyan })
+  hl("SpecialChar",    { fg = c.orange })
+  hl("Delimiter",      { fg = p.dim })
+  hl("SpecialComment", { fg = c.cyan })
+  hl("Tag",            { fg = c.blue })
+
+  hl("Title",          { fg = c.blue, bold = true })
+  hl("Todo",           { fg = c.yellow, bold = true })
+
+  -- diff (the :diffthis / fugitive surface — distinct from gutter chrome)
+  hl("DiffAdd",        { fg = c.green })
+  hl("DiffChange",     { fg = c.yellow })
+  hl("DiffDelete",     { fg = c.red })
+  hl("DiffText",       { fg = c.orange, bold = true })
+  hl("Added",          { fg = c.green })
+  hl("Changed",        { fg = c.yellow })
+  hl("Removed",        { fg = c.red })
+
+  -- ── Vivid content syntax (treesitter @-captures) ──────────────────────
+  -- Modern nvim highlights via treesitter for most languages (.rs, .lua,
+  -- .toml, etc.). These @-captures must get the vivid accents too or the
+  -- legacy mapping above never reaches treesitter-highlighted buffers.
+  hl("@comment",                 { fg = p.comment, italic = true })
+
+  hl("@keyword",                 { fg = c.magenta })
+  hl("@keyword.function",        { fg = c.magenta })
+  hl("@keyword.operator",        { fg = c.magenta })
+  hl("@keyword.return",          { fg = c.magenta })
+  hl("@keyword.conditional",     { fg = c.magenta })
+  hl("@keyword.repeat",          { fg = c.magenta })
+  hl("@keyword.import",          { fg = c.magenta })
+  hl("@keyword.exception",       { fg = c.magenta })
+  hl("@conditional",             { fg = c.magenta })
+  hl("@repeat",                  { fg = c.magenta })
+  hl("@exception",               { fg = c.magenta })
+  hl("@include",                 { fg = c.magenta })
+
+  hl("@string",                  { fg = c.green })
+  hl("@string.regex",            { fg = c.cyan })
+  hl("@string.escape",           { fg = c.orange })
+  hl("@string.special",          { fg = c.orange })
+  hl("@character",               { fg = c.green })
+  hl("@character.special",       { fg = c.orange })
+
+  hl("@number",                  { fg = c.orange })
+  hl("@number.float",            { fg = c.orange })
+  hl("@float",                   { fg = c.orange })
+  hl("@boolean",                 { fg = c.orange })
+  hl("@constant",                { fg = c.orange })
+  hl("@constant.builtin",        { fg = c.orange })
+  hl("@constant.macro",          { fg = c.cyan })
+
+  hl("@function",                { fg = c.blue })
+  hl("@function.call",           { fg = c.blue })
+  hl("@function.builtin",        { fg = c.blue_dk })
+  hl("@function.macro",          { fg = c.cyan })
+  hl("@function.method",         { fg = c.blue })
+  hl("@function.method.call",    { fg = c.blue })
+  hl("@constructor",             { fg = c.cyan })
+  hl("@method",                  { fg = c.blue })
+  hl("@method.call",             { fg = c.blue })
+
+  hl("@type",                    { fg = c.cyan })
+  hl("@type.builtin",            { fg = c.cyan })
+  hl("@type.definition",         { fg = c.cyan })
+  hl("@type.qualifier",          { fg = c.magenta })
+  hl("@storageclass",            { fg = c.cyan })
+  hl("@attribute",               { fg = c.cyan })
+  hl("@namespace",               { fg = c.blue_dk })
+  hl("@module",                  { fg = c.blue_dk })
+
+  hl("@variable",                { fg = p.fg })
+  hl("@variable.builtin",        { fg = c.red })
+  hl("@variable.parameter",      { fg = c.orange })
+  hl("@variable.member",         { fg = p.fg })
+  hl("@parameter",               { fg = c.orange })
+  hl("@field",                   { fg = p.fg })
+  hl("@property",                { fg = p.fg })
+
+  hl("@operator",                { fg = c.cyan })
+  hl("@punctuation.delimiter",   { fg = p.dim })
+  hl("@punctuation.bracket",     { fg = p.dim })
+  hl("@punctuation.special",     { fg = c.orange })
+
+  hl("@label",                   { fg = c.magenta })
+  hl("@tag",                     { fg = c.magenta })
+  hl("@tag.attribute",           { fg = c.cyan })
+  hl("@tag.delimiter",           { fg = p.dim })
+
+  hl("@text.title",              { fg = c.blue, bold = true })
+  hl("@text.uri",                { fg = c.cyan, underline = true })
+  hl("@text.literal",           { fg = c.green })
+  hl("@text.reference",          { fg = c.orange })
+  hl("@text.todo",               { fg = c.yellow, bold = true })
+  hl("@text.warning",            { fg = c.yellow })
+  hl("@text.danger",             { fg = c.red })
+
+  -- nvim 0.10+ semantic-token / treesitter normalized names
+  hl("@markup.heading",          { fg = c.blue, bold = true })
+  hl("@markup.link.url",         { fg = c.cyan, underline = true })
+  hl("@markup.raw",              { fg = c.green })
+  hl("@markup.list",             { fg = c.magenta })
+  hl("@diff.plus",               { fg = c.green })
+  hl("@diff.minus",              { fg = c.red })
+  hl("@diff.delta",              { fg = c.yellow })
+
+  -- LSP semantic tokens — align with the treesitter accents above so LSP
+  -- and treesitter never disagree on the same token.
+  hl("@lsp.type.keyword",        { fg = c.magenta })
+  hl("@lsp.type.function",       { fg = c.blue })
+  hl("@lsp.type.method",         { fg = c.blue })
+  hl("@lsp.type.type",           { fg = c.cyan })
+  hl("@lsp.type.struct",         { fg = c.cyan })
+  hl("@lsp.type.enum",           { fg = c.cyan })
+  hl("@lsp.type.interface",      { fg = c.cyan })
+  hl("@lsp.type.class",          { fg = c.yellow })
+  hl("@lsp.type.namespace",      { fg = c.blue_dk })
+  hl("@lsp.type.parameter",      { fg = c.orange })
+  hl("@lsp.type.property",       { fg = p.fg })
+  hl("@lsp.type.variable",       { fg = p.fg })
+  hl("@lsp.type.string",         { fg = c.green })
+  hl("@lsp.type.number",         { fg = c.orange })
+  hl("@lsp.type.enumMember",     { fg = c.orange })
 
   -- inline color previews for CSS/HTML/etc.
   local has_colorizer, colorizer = pcall(require, "colorizer")
