@@ -18,7 +18,7 @@ function M.setup()
     timeout           = 3000,
     max_width         = 60,
     top_down          = true,
-    background_colour = "#2E3440",
+    background_colour = "#16140E",
     fps               = 60,
   })
 

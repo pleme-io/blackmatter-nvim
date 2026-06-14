@@ -51,11 +51,11 @@ function M.setup()
     end,
   })
 
-  -- Nord-friendly highlight colors
-  vim.api.nvim_set_hl(0, "GitSignsAdd", { fg = "#A3BE8C" })
-  vim.api.nvim_set_hl(0, "GitSignsChange", { fg = "#EBCB8B" })
-  vim.api.nvim_set_hl(0, "GitSignsDelete", { fg = "#BF616A" })
-  vim.api.nvim_set_hl(0, "GitSignsChangedelete", { fg = "#B48EAD" })
-  vim.api.nvim_set_hl(0, "GitSignsTopdelete", { fg = "#BF616A" })
+  -- Vellum highlight colors (cterm twins so signs stay colored without truecolor)
+  vim.api.nvim_set_hl(0, "GitSignsAdd", { fg = "#A9BB8C", ctermfg = 144 })
+  vim.api.nvim_set_hl(0, "GitSignsChange", { fg = "#D7C489", ctermfg = 180 })
+  vim.api.nvim_set_hl(0, "GitSignsDelete", { fg = "#C9837B", ctermfg = 174 })
+  vim.api.nvim_set_hl(0, "GitSignsChangedelete", { fg = "#B8A1B9", ctermfg = 139 })
+  vim.api.nvim_set_hl(0, "GitSignsTopdelete", { fg = "#C9837B", ctermfg = 174 })
 end
 return M

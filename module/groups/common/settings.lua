@@ -12,7 +12,14 @@ function M.setup()
 	vim.opt.wrap = false
 	vim.opt.updatetime = 300
 	vim.opt.relativenumber = true
-	vim.opt.termguicolors = true
+	-- Truecolor is the happy path, but only enable termguicolors when the
+	-- terminal actually advertises it. Otherwise nvim collapses gui-only
+	-- highlights to terminal defaults (the classic "all white" bug). With it
+	-- off, nvim falls back to the cterm palette (every highlight below ships
+	-- a cterm fallback), so the UI stays colored-not-white either way.
+	-- mado projects COLORTERM=truecolor, so this stays on there.
+	local colorterm = vim.env.COLORTERM
+	vim.opt.termguicolors = (colorterm == "truecolor" or colorterm == "24bit")
 	vim.opt.timeoutlen = 300
 	vim.opt.shiftwidth = 2
 	vim.opt.expandtab = true

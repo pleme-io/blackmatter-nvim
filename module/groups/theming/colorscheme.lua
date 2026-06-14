@@ -1,133 +1,209 @@
 local M = {}
+
+-- ── Vellum palette ───────────────────────────────────────────────────────
+-- Warm aged-paper Nord-matte. Every value carries a gui hex AND the nearest
+-- xterm-256 cterm index, so highlights stay colored even when termguicolors
+-- is off (no truecolor terminal). cterm indices are approximate by design —
+-- the goal is "never uncolored", not exact reproduction.
+local p = {
+  bg          = { gui = "#16140E", cterm = 233 },
+  surface     = { gui = "#1F1C15", cterm = 234 },
+  selection   = { gui = "#2B2820", cterm = 235 },
+  comment     = { gui = "#90897B", cterm = 245 },
+  dim         = { gui = "#ADA593", cterm = 247 },
+  fg          = { gui = "#E2DBC8", cterm = 187 },
+  fg_plus     = { gui = "#EDE6D6", cterm = 254 },
+  fg_plus2    = { gui = "#F4EFE2", cterm = 230 },
+  red         = { gui = "#C9837B", cterm = 174 },
+  orange      = { gui = "#CB9070", cterm = 173 },
+  yellow      = { gui = "#D7C489", cterm = 180 },
+  green       = { gui = "#A9BB8C", cterm = 144 },
+  cyan        = { gui = "#94BBB8", cterm = 109 },
+  blue        = { gui = "#99AABE", cterm = 103 },
+  purple      = { gui = "#B8A1B9", cterm = 139 },
+  brown       = { gui = "#B3886C", cterm = 137 },
+  cursor      = { gui = "#ADD7A3", cterm = 151 },
+  border      = { gui = "#6E6857", cterm = 240 },
+}
+
+-- hl(group, spec) — spec keys fg/bg are Vellum palette entries (or the
+-- literal "NONE"); every gui color gets its cterm twin written automatically,
+-- so no override is ever gui-only. Style flags (bold/italic/...) pass through.
+local function hl(group, spec)
+  local out = {}
+  for k, v in pairs(spec) do
+    out[k] = v
+  end
+  if spec.fg ~= nil then
+    if spec.fg == "NONE" then
+      out.fg, out.ctermfg = "NONE", "NONE"
+    else
+      out.fg, out.ctermfg = spec.fg.gui, spec.fg.cterm
+    end
+  end
+  if spec.bg ~= nil then
+    if spec.bg == "NONE" then
+      out.bg, out.ctermbg = "NONE", "NONE"
+    else
+      out.bg, out.ctermbg = spec.bg.gui, spec.bg.cterm
+    end
+  end
+  if spec.sp ~= nil and spec.sp ~= "NONE" then
+    out.sp = spec.sp.gui
+  end
+  vim.api.nvim_set_hl(0, group, out)
+end
+
+-- Expose the palette so this module's hl() and others can reuse it.
+M.palette = p
+
 function M.setup()
-  -- set your colorscheme early so other plugins pick up its highlights
-  vim.cmd([[colorscheme nord]])
-  -- expose your palette for others
-  M.base   = "#2E3440"
-  M.popout = "#d8dee9"
+  -- Load the base colorscheme defensively. nord.nvim is the base the Vellum
+  -- overrides sit on; if it ever fails to load (plugin missing, runtime error)
+  -- we fall back to the built-in habamax so we are NEVER left on the bare
+  -- terminal default. Either way the overrides below run.
+  local ok = pcall(vim.cmd, "colorscheme nord")
+  if not ok then
+    pcall(vim.cmd, "colorscheme habamax")
+    vim.schedule(function()
+      vim.notify(
+        "[theming] base colorscheme 'nord' failed to load — using 'habamax' fallback; Vellum overrides still applied",
+        vim.log.levels.WARN
+      )
+    end)
+  end
+
+  -- expose your palette for others (legacy keys kept for bufferline etc.)
+  M.base   = p.bg.gui
+  M.popout = p.fg_plus.gui
 
   -- rounded borders on all floating windows (Neovim 0.11+)
   vim.o.winborder = "rounded"
 
+  -- core editor surface
+  hl("Normal",       { fg = p.fg, bg = p.bg })
+  hl("Comment",      { fg = p.comment, italic = true })
+
   -- subtle float and cursor highlights
-  vim.api.nvim_set_hl(0, "FloatBorder", { fg = "#4C566A", bg = "NONE" })
-  vim.api.nvim_set_hl(0, "NormalFloat", { bg = "#2E3440" })
-  vim.api.nvim_set_hl(0, "CursorLine", { bg = "#3B4252" })
-  vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#88C0D0", bold = true })
+  hl("FloatBorder",  { fg = p.border, bg = "NONE" })
+  hl("NormalFloat",  { bg = p.bg })
+  hl("CursorLine",   { bg = p.surface })
+  hl("CursorLineNr", { fg = p.cyan, bold = true })
+  hl("Cursor",       { fg = p.bg, bg = p.cursor })
 
-  -- search highlights — frost accent on polar night
-  vim.api.nvim_set_hl(0, "Search", { fg = "#2E3440", bg = "#88C0D0" })
-  vim.api.nvim_set_hl(0, "IncSearch", { fg = "#2E3440", bg = "#EBCB8B" })
-  vim.api.nvim_set_hl(0, "CurSearch", { fg = "#2E3440", bg = "#A3BE8C" })
+  -- search highlights — warm parchment accents
+  hl("Search",    { fg = p.bg, bg = p.yellow })
+  hl("IncSearch", { fg = p.bg, bg = p.orange })
+  hl("CurSearch", { fg = p.bg, bg = p.green })
 
-  -- visual selection — slightly lighter than CursorLine for distinction
-  vim.api.nvim_set_hl(0, "Visual", { bg = "#434C5E" })
-  vim.api.nvim_set_hl(0, "VisualNOS", { bg = "#434C5E" })
+  -- visual selection
+  hl("Visual",    { bg = p.selection })
+  hl("VisualNOS", { bg = p.selection })
 
   -- treesitter-context — sticky scope header
-  vim.api.nvim_set_hl(0, "TreesitterContext", { bg = "#313745" })
-  vim.api.nvim_set_hl(0, "TreesitterContextSeparator", { fg = "#3B4252", bg = "#313745" })
+  hl("TreesitterContext",          { bg = p.surface })
+  hl("TreesitterContextSeparator", { fg = p.selection, bg = p.surface })
 
   -- line numbers — subdued, let code take focus
-  vim.api.nvim_set_hl(0, "LineNr", { fg = "#4C566A" })
-  vim.api.nvim_set_hl(0, "SignColumn", { bg = "NONE" })
-  vim.api.nvim_set_hl(0, "FoldColumn", { fg = "#4C566A", bg = "NONE" })
+  hl("LineNr",     { fg = p.border })
+  hl("SignColumn", { bg = "NONE" })
+  hl("FoldColumn", { fg = p.border, bg = "NONE" })
 
   -- window separators — thin, barely there
-  vim.api.nvim_set_hl(0, "WinSeparator", { fg = "#3B4252" })
+  hl("WinSeparator", { fg = p.selection })
 
   -- completion menu — cohesive with floats
-  vim.api.nvim_set_hl(0, "Pmenu", { fg = "#D8DEE9", bg = "#2E3440" })
-  vim.api.nvim_set_hl(0, "PmenuSel", { fg = "#ECEFF4", bg = "#3B4252" })
-  vim.api.nvim_set_hl(0, "PmenuSbar", { bg = "#3B4252" })
-  vim.api.nvim_set_hl(0, "PmenuThumb", { bg = "#4C566A" })
+  hl("Pmenu",      { fg = p.fg, bg = p.surface })
+  hl("PmenuSel",   { fg = p.fg_plus, bg = p.selection })
+  hl("PmenuSbar",  { bg = p.selection })
+  hl("PmenuThumb", { bg = p.border })
 
-  -- diagnostics — explicit aurora mapping
-  vim.api.nvim_set_hl(0, "DiagnosticError", { fg = "#BF616A" })
-  vim.api.nvim_set_hl(0, "DiagnosticWarn", { fg = "#EBCB8B" })
-  vim.api.nvim_set_hl(0, "DiagnosticInfo", { fg = "#88C0D0" })
-  vim.api.nvim_set_hl(0, "DiagnosticHint", { fg = "#A3BE8C" })
-  vim.api.nvim_set_hl(0, "DiagnosticUnderlineError", { undercurl = true, sp = "#BF616A" })
-  vim.api.nvim_set_hl(0, "DiagnosticUnderlineWarn", { undercurl = true, sp = "#EBCB8B" })
-  vim.api.nvim_set_hl(0, "DiagnosticUnderlineInfo", { undercurl = true, sp = "#88C0D0" })
-  vim.api.nvim_set_hl(0, "DiagnosticUnderlineHint", { undercurl = true, sp = "#A3BE8C" })
+  -- diagnostics — Vellum mapping
+  hl("DiagnosticError", { fg = p.red })
+  hl("DiagnosticWarn",  { fg = p.yellow })
+  hl("DiagnosticInfo",  { fg = p.cyan })
+  hl("DiagnosticHint",  { fg = p.green })
+  hl("DiagnosticUnderlineError", { undercurl = true, sp = p.red })
+  hl("DiagnosticUnderlineWarn",  { undercurl = true, sp = p.yellow })
+  hl("DiagnosticUnderlineInfo",  { undercurl = true, sp = p.cyan })
+  hl("DiagnosticUnderlineHint",  { undercurl = true, sp = p.green })
 
-  -- matching brackets — frost accent, not neon
-  vim.api.nvim_set_hl(0, "MatchParen", { fg = "#88C0D0", bg = "#434C5E", bold = true })
+  -- matching brackets — accent, not neon
+  hl("MatchParen", { fg = p.cyan, bg = p.selection, bold = true })
 
   -- word highlighting (vim-illuminate) — subtle same-word emphasis
-  vim.api.nvim_set_hl(0, "IlluminatedWordText", { bg = "#3B4252" })
-  vim.api.nvim_set_hl(0, "IlluminatedWordRead", { bg = "#3B4252" })
-  vim.api.nvim_set_hl(0, "IlluminatedWordWrite", { bg = "#3B4252", underline = true })
+  hl("IlluminatedWordText",  { bg = p.surface })
+  hl("IlluminatedWordRead",  { bg = p.surface })
+  hl("IlluminatedWordWrite", { bg = p.surface, underline = true })
 
   -- folds — muted, out of the way
-  vim.api.nvim_set_hl(0, "Folded", { fg = "#616E88", bg = "#313745" })
+  hl("Folded", { fg = p.comment, bg = p.surface })
 
   -- invisible characters — nearly invisible
-  vim.api.nvim_set_hl(0, "NonText", { fg = "#3B4252" })
-  vim.api.nvim_set_hl(0, "Whitespace", { fg = "#3B4252" })
+  hl("NonText",    { fg = p.selection })
+  hl("Whitespace", { fg = p.selection })
 
-  -- telescope — recessed borders, frost accents on titles
-  vim.api.nvim_set_hl(0, "TelescopeBorder", { fg = "#3B4252" })
-  vim.api.nvim_set_hl(0, "TelescopePromptBorder", { fg = "#4C566A" })
-  vim.api.nvim_set_hl(0, "TelescopeResultsBorder", { fg = "#3B4252" })
-  vim.api.nvim_set_hl(0, "TelescopePreviewBorder", { fg = "#3B4252" })
-  vim.api.nvim_set_hl(0, "TelescopePromptTitle", { fg = "#88C0D0", bold = true })
-  vim.api.nvim_set_hl(0, "TelescopeResultsTitle", { fg = "#A3BE8C" })
-  vim.api.nvim_set_hl(0, "TelescopePreviewTitle", { fg = "#81A1C1" })
-  vim.api.nvim_set_hl(0, "TelescopeSelection", { bg = "#3B4252" })
-  vim.api.nvim_set_hl(0, "TelescopePromptPrefix", { fg = "#88C0D0" })
+  -- telescope — recessed borders, warm accents on titles
+  hl("TelescopeBorder",        { fg = p.selection })
+  hl("TelescopePromptBorder",  { fg = p.border })
+  hl("TelescopeResultsBorder", { fg = p.selection })
+  hl("TelescopePreviewBorder", { fg = p.selection })
+  hl("TelescopePromptTitle",   { fg = p.cyan, bold = true })
+  hl("TelescopeResultsTitle",  { fg = p.green })
+  hl("TelescopePreviewTitle",  { fg = p.blue })
+  hl("TelescopeSelection",     { bg = p.surface })
+  hl("TelescopePromptPrefix",  { fg = p.cyan })
 
   -- git blame — italic, recedes into background
-  vim.api.nvim_set_hl(0, "GitSignsCurrentLineBlame", { fg = "#4C566A", italic = true })
+  hl("GitSignsCurrentLineBlame", { fg = p.border, italic = true })
 
   -- floating window titles — consistent accent
-  vim.api.nvim_set_hl(0, "FloatTitle", { fg = "#88C0D0", bold = true })
+  hl("FloatTitle", { fg = p.cyan, bold = true })
 
-  -- completion match highlighting — frost accent on matched characters
-  vim.api.nvim_set_hl(0, "CmpItemAbbrMatch", { fg = "#88C0D0", bold = true })
-  vim.api.nvim_set_hl(0, "CmpItemAbbrMatchFuzzy", { fg = "#88C0D0" })
-  vim.api.nvim_set_hl(0, "CmpItemAbbrDeprecated", { fg = "#4C566A", strikethrough = true })
-  vim.api.nvim_set_hl(0, "CmpItemKindFunction", { fg = "#88C0D0" })
-  vim.api.nvim_set_hl(0, "CmpItemKindMethod", { fg = "#88C0D0" })
-  vim.api.nvim_set_hl(0, "CmpItemKindVariable", { fg = "#81A1C1" })
-  vim.api.nvim_set_hl(0, "CmpItemKindField", { fg = "#81A1C1" })
-  vim.api.nvim_set_hl(0, "CmpItemKindProperty", { fg = "#81A1C1" })
-  vim.api.nvim_set_hl(0, "CmpItemKindClass", { fg = "#EBCB8B" })
-  vim.api.nvim_set_hl(0, "CmpItemKindStruct", { fg = "#EBCB8B" })
-  vim.api.nvim_set_hl(0, "CmpItemKindInterface", { fg = "#EBCB8B" })
-  vim.api.nvim_set_hl(0, "CmpItemKindModule", { fg = "#A3BE8C" })
-  vim.api.nvim_set_hl(0, "CmpItemKindKeyword", { fg = "#B48EAD" })
-  vim.api.nvim_set_hl(0, "CmpItemKindSnippet", { fg = "#D08770" })
-  vim.api.nvim_set_hl(0, "CmpItemKindText", { fg = "#D8DEE9" })
-  vim.api.nvim_set_hl(0, "CmpItemKindFile", { fg = "#D8DEE9" })
-  vim.api.nvim_set_hl(0, "CmpItemKindFolder", { fg = "#D8DEE9" })
+  -- completion match highlighting — accent on matched characters
+  hl("CmpItemAbbrMatch",      { fg = p.cyan, bold = true })
+  hl("CmpItemAbbrMatchFuzzy", { fg = p.cyan })
+  hl("CmpItemAbbrDeprecated", { fg = p.border, strikethrough = true })
+  hl("CmpItemKindFunction",   { fg = p.cyan })
+  hl("CmpItemKindMethod",     { fg = p.cyan })
+  hl("CmpItemKindVariable",   { fg = p.blue })
+  hl("CmpItemKindField",      { fg = p.blue })
+  hl("CmpItemKindProperty",   { fg = p.blue })
+  hl("CmpItemKindClass",      { fg = p.yellow })
+  hl("CmpItemKindStruct",     { fg = p.yellow })
+  hl("CmpItemKindInterface",  { fg = p.yellow })
+  hl("CmpItemKindModule",     { fg = p.green })
+  hl("CmpItemKindKeyword",    { fg = p.purple })
+  hl("CmpItemKindSnippet",    { fg = p.orange })
+  hl("CmpItemKindText",       { fg = p.fg })
+  hl("CmpItemKindFile",       { fg = p.fg })
+  hl("CmpItemKindFolder",     { fg = p.fg })
 
   -- notifications — severity-colored borders and icons
-  vim.api.nvim_set_hl(0, "NotifyERRORBorder", { fg = "#BF616A" })
-  vim.api.nvim_set_hl(0, "NotifyWARNBorder", { fg = "#EBCB8B" })
-  vim.api.nvim_set_hl(0, "NotifyINFOBorder", { fg = "#88C0D0" })
-  vim.api.nvim_set_hl(0, "NotifyDEBUGBorder", { fg = "#4C566A" })
-  vim.api.nvim_set_hl(0, "NotifyTRACEBorder", { fg = "#B48EAD" })
-  vim.api.nvim_set_hl(0, "NotifyERRORIcon", { fg = "#BF616A" })
-  vim.api.nvim_set_hl(0, "NotifyWARNIcon", { fg = "#EBCB8B" })
-  vim.api.nvim_set_hl(0, "NotifyINFOIcon", { fg = "#88C0D0" })
-  vim.api.nvim_set_hl(0, "NotifyDEBUGIcon", { fg = "#4C566A" })
-  vim.api.nvim_set_hl(0, "NotifyTRACEIcon", { fg = "#B48EAD" })
-  vim.api.nvim_set_hl(0, "NotifyERRORTitle", { fg = "#BF616A" })
-  vim.api.nvim_set_hl(0, "NotifyWARNTitle", { fg = "#EBCB8B" })
-  vim.api.nvim_set_hl(0, "NotifyINFOTitle", { fg = "#88C0D0" })
-  vim.api.nvim_set_hl(0, "NotifyDEBUGTitle", { fg = "#4C566A" })
-  vim.api.nvim_set_hl(0, "NotifyTRACETitle", { fg = "#B48EAD" })
+  hl("NotifyERRORBorder", { fg = p.red })
+  hl("NotifyWARNBorder",  { fg = p.yellow })
+  hl("NotifyINFOBorder",  { fg = p.cyan })
+  hl("NotifyDEBUGBorder", { fg = p.border })
+  hl("NotifyTRACEBorder", { fg = p.purple })
+  hl("NotifyERRORIcon",   { fg = p.red })
+  hl("NotifyWARNIcon",    { fg = p.yellow })
+  hl("NotifyINFOIcon",    { fg = p.cyan })
+  hl("NotifyDEBUGIcon",   { fg = p.border })
+  hl("NotifyTRACEIcon",   { fg = p.purple })
+  hl("NotifyERRORTitle",  { fg = p.red })
+  hl("NotifyWARNTitle",   { fg = p.yellow })
+  hl("NotifyINFOTitle",   { fg = p.cyan })
+  hl("NotifyDEBUGTitle",  { fg = p.border })
+  hl("NotifyTRACETitle",  { fg = p.purple })
 
   -- trouble — custom window styling
-  vim.api.nvim_set_hl(0, "TroubleNormal", { bg = "#2E3440" })
-  vim.api.nvim_set_hl(0, "TroubleNormalNC", { bg = "#2E3440" })
-  vim.api.nvim_set_hl(0, "TroubleCount", { fg = "#88C0D0", bold = true })
-  vim.api.nvim_set_hl(0, "TroubleIndent", { fg = "#3B4252" })
+  hl("TroubleNormal",   { bg = p.bg })
+  hl("TroubleNormalNC", { bg = p.bg })
+  hl("TroubleCount",    { fg = p.cyan, bold = true })
+  hl("TroubleIndent",   { fg = p.selection })
 
   -- lsp signature active parameter — stand out in param list
-  vim.api.nvim_set_hl(0, "LspSignatureActiveParameter", { fg = "#EBCB8B", bold = true, underline = true })
+  hl("LspSignatureActiveParameter", { fg = p.yellow, bold = true, underline = true })
 
   -- inline color previews for CSS/HTML/etc.
   local has_colorizer, colorizer = pcall(require, "colorizer")
@@ -151,4 +227,5 @@ function M.setup()
     })
   end
 end
+
 return M

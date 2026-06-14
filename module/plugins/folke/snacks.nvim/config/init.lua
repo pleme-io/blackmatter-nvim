@@ -2,7 +2,7 @@ local M = {}
 function M.setup()
   local Snacks = require("snacks")
 
-  -- Gradient ASCII logo: frost blue (#88C0D0) → aurora green (#A3BE8C)
+  -- Gradient ASCII logo: Vellum cyan (#94BBB8) → Vellum green (#A9BB8C)
   -- Rendered via terminal section for ANSI color support + cascade animation
   local logo = {
     "    ██████╗ ██╗      █████╗  ██████╗██╗  ██╗",
@@ -20,12 +20,13 @@ function M.setup()
     "    ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝",
   }
 
+  -- Vellum cyan #94BBB8 (148,187,184) → Vellum green #A9BB8C (169,187,140)
   local gradient = {
-    { 136, 192, 208 }, { 139, 192, 201 }, { 142, 191, 194 },
-    { 145, 191, 187 }, { 148, 191, 180 }, { 150, 191, 174 },
+    { 148, 187, 184 }, { 152, 187, 175 }, { 156, 187, 166 },
+    { 160, 187, 157 }, { 164, 187, 149 }, { 169, 187, 140 },
     nil, -- empty line
-    { 153, 190, 167 }, { 155, 190, 160 }, { 158, 190, 153 },
-    { 160, 190, 147 }, { 163, 190, 140 }, { 163, 190, 140 },
+    { 148, 187, 184 }, { 152, 187, 175 }, { 156, 187, 166 },
+    { 160, 187, 157 }, { 164, 187, 149 }, { 169, 187, 140 },
   }
 
   local parts = {}
@@ -40,10 +41,10 @@ function M.setup()
       )
     end
   end
-  -- Tagline in muted snow (#D8DEE9) with breathing room
+  -- Tagline in Vellum dim (#ADA593) with breathing room; separator in border (#6E6857)
   parts[#parts + 1] = "echo ''"
-  parts[#parts + 1] = [[printf '\033[38;2;76;86;106m'; echo '              ─────────────────────────────']]
-  parts[#parts + 1] = [[printf '\033[38;2;216;222;233m'; echo '                    neovim, refined']]
+  parts[#parts + 1] = [[printf '\033[38;2;110;104;87m'; echo '              ─────────────────────────────']]
+  parts[#parts + 1] = [[printf '\033[38;2;173;165;147m'; echo '                    neovim, refined']]
   parts[#parts + 1] = [[printf '\033[0m']]
   local logo_cmd = table.concat(parts, "; ")
 
