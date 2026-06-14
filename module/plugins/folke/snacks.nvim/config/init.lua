@@ -40,19 +40,27 @@ function M.setup()
   local grad_hex = (fleet_theme == "vellum")
     and { "#94BBB8", "#98BBAF", "#9CBBA6", "#A0BB9D", "#A4BB94", "#A9BB8C" }
     or  { "#A3BE8C", "#9EBE9A", "#98BFA7", "#93BFB5", "#8DC0C2", "#88C0D0" }
+  -- 256-color twins for every gui stop (green→cyan) so the logo is never
+  -- all-white on a non-truecolor session (the fleet "always a cterm twin"
+  -- rule — same class as the prior all-white incidents).
+  local grad_cterm = (fleet_theme == "vellum")
+    and { 116, 115, 114, 108, 108, 107 }
+    or  { 108, 108, 115, 115, 116, 116 }
   -- Separator + tagline per theme (Nord border/snow | Vellum border/dim).
   local sep_hex = (fleet_theme == "vellum") and "#6E6857" or "#4C566A"
   local tag_hex = (fleet_theme == "vellum") and "#ADA593" or "#D8DEE9"
+  local sep_cterm = (fleet_theme == "vellum") and 240 or 60
+  local tag_cterm = (fleet_theme == "vellum") and 144 or 188
   -- Set the logo highlight groups AND re-set them on every ColorScheme:
   -- the base `:colorscheme nord` does `hi clear`, which would wipe these
   -- custom groups if the dashboard happened to configure before the
   -- colorscheme. The autocmd makes the logo colors survive any (re)load.
   local function set_logo_hl()
     for i, hex in ipairs(grad_hex) do
-      vim.api.nvim_set_hl(0, "MadoDashLogo" .. i, { fg = hex, bold = true })
+      vim.api.nvim_set_hl(0, "MadoDashLogo" .. i, { fg = hex, ctermfg = grad_cterm[i], bold = true })
     end
-    vim.api.nvim_set_hl(0, "MadoDashSep", { fg = sep_hex })
-    vim.api.nvim_set_hl(0, "MadoDashTag", { fg = tag_hex, bold = true })
+    vim.api.nvim_set_hl(0, "MadoDashSep", { fg = sep_hex, ctermfg = sep_cterm })
+    vim.api.nvim_set_hl(0, "MadoDashTag", { fg = tag_hex, ctermfg = tag_cterm, bold = true })
   end
   set_logo_hl()
   vim.api.nvim_create_autocmd("ColorScheme", { callback = set_logo_hl })
