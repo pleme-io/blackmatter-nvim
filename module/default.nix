@@ -66,7 +66,13 @@ in {
       home.activation.cleanNvimSiteLinks = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
         for dir in "$HOME/.local/share/nvim/site/queries" "$HOME/.local/share/nvim/site/parser"; do
           if [ -L "$dir" ]; then
-            rm "$dir"
+            # -f: a concurrent activation (another user's generation switch
+            # racing this one, or a killed/retried rebuild) can remove this
+            # same symlink between the -L check and this rm -- confirmed
+            # live 2026-07-17, "No such file or directory" aborting the
+            # whole darwin-rebuild switch on an otherwise-harmless race.
+            # The goal ("this path is gone") is already met in that case.
+            rm -f "$dir"
           elif [ -d "$dir" ]; then
             find "$dir" -type l -delete 2>/dev/null || true
             find "$dir" -depth -type d -empty -delete 2>/dev/null || true
